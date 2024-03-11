@@ -8,8 +8,25 @@ const { User } = require("./modals/Logins/UserLogin")
 const app = express();
 const cors = require("cors");
 app.use(express.json());
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3005', 'https://imdfx-newserver-rwes-i8f9pec94-mohammadikram008s-projects.vercel.app'],
+  // other CORS options...
+}));
 app.use((req, res, next) => {
+  const allowedOrigins = ['http://localhost:3005', 'https://imdfx-newserver-rwes-i8f9pec94-mohammadikram008s-projects.vercel.app'];
+  const origin = req.headers.origin;
+
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+
+  // other CORS options...
+  next();
+});
+
+app.use((req, res, next) => {
+  
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   next();
@@ -33,10 +50,10 @@ app.post('/login', async (req, res) => {
       if (user.password !== password) {
         return res.status(401).json('Invalid password');
       }
-      const secretKey = generateSecretKey();
+      // const secretKey = generateSecretKey();
       // console.log(secretKey);
   
-      const token = jwt.sign({ email: user._id }, secretKey);
+      // const token = jwt.sign({ email: user._id }, secretKey);
       // console.log(token);
       res.status(200).json(user._id);
     } catch (error) {
