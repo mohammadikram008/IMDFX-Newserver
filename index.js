@@ -9,7 +9,11 @@ const app = express();
 const cors = require("cors");
 app.use(express.json());
 app.use(cors({
-  origin: "*"
+  origin: "*",
+  optionsSuccessStatus: "200",
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"],
+  credentials: true
 }));
 const PORT = process.env.PORT || 3006;
 // const router = require("./Routes/RouteLogins/User");
@@ -18,29 +22,29 @@ app.get('/', async (req, res) => {
 
 });
 app.post('/login', async (req, res) => {
-      try {
-        const { email, password } = req.body;
-        // console.log(" email, password", email, password)
-        const user = await User.findOne({ email }).exec();
+  try {
+    const { email, password } = req.body;
+    // console.log(" email, password", email, password)
+    const user = await User.findOne({ email }).exec();
 
-        if (!user) {
-  console.log("User not found");
-          return res.status(404).json('User not found');
-        }
+    if (!user) {
+      console.log("User not found");
+      return res.status(404).json('User not found');
+    }
 
-        if (user.password !== password) {
-          return res.status(401).json('Invalid password');
-        }
-        // const secretKey = generateSecretKey();
-        // console.log(secretKey);
+    if (user.password !== password) {
+      return res.status(401).json('Invalid password');
+    }
+    // const secretKey = generateSecretKey();
+    // console.log(secretKey);
 
-        // const token = jwt.sign({ email: user._id }, secretKey);
-        // console.log(token);
-        res.status(200).json(user._id);
-      } catch (error) {
-        res.status(500).json('Error finding user');
-        console.log("error",error);
-      }
+    // const token = jwt.sign({ email: user._id }, secretKey);
+    // console.log(token);
+    res.status(200).json(user._id);
+  } catch (error) {
+    res.status(500).json('Error finding user');
+    console.log("error", error);
+  }
 });
 const router = require('./Routes/RouteLogins/User')
 app.use('/api', router);
