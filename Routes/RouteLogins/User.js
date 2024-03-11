@@ -13,8 +13,8 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
-const multer = require('multer'); // for handling file uploads
-const upload = multer({ dest: 'uploads/' });
+// const multer = require('multer'); 
+// const upload = multer({ dest: 'uploads/' });
 const app = express();
 const cors = require("cors");
 
@@ -22,7 +22,7 @@ const { authenticateToken } = require('../../authentication');
 const { log } = require('console');
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+// app.use('/uploads', express.static('uploads'));
 
 router.use((req, res, next) => {
   // Middleware logic here
@@ -159,7 +159,9 @@ router.get('/getpatient', async (req, res) => {
 });
 
 //add doctor  details
-router.post('/doctorpersnoldetails', upload.single('image'), async (req, res) => {
+router.post('/doctorpersnoldetails',
+//  upload.single('image'),
+  async (req, res) => {
   try {
     const { body, file,verification } = req;
     // console.log("body", body)
@@ -717,7 +719,9 @@ router.get("/mypayments/:userId", async (req, res) => {
   }
 });
 // API endpoint for updating the profile
-router.post('/update-patient-profile/:userId', upload.single('image'), async (req, res) => {
+router.post('/update-patient-profile/:userId', 
+// upload.single('image'),
+ async (req, res) => {
   try {
     const userId = req.params.userId;
     console.log("body", req.body);
@@ -769,7 +773,9 @@ router.post('/update-patient-profile/:userId', upload.single('image'), async (re
   }
 });
 
-router.post('/update-doctor-profile/:docId', upload.single('image'), async (req, res) => {
+router.post('/update-doctor-profile/:docId',
+//  upload.single('image'),
+  async (req, res) => {
   try {
     const userId = req.params.userId;
     console.log("body", req.body);
