@@ -8,60 +8,57 @@ const { User } = require("./modals/Logins/UserLogin")
 const app = express();
 const cors = require("cors");
 app.use(express.json());
-// app.use(cors());
-app.use(cors({
-  origin: ['http://localhost:3005', 'https://imdfx-newserver-rwes-i8f9pec94-mohammadikram008s-projects.vercel.app'],
-  // other CORS options...
-}));
-app.use((req, res, next) => {
-  const allowedOrigins = ['http://localhost:3005', 'https://imdfx-newserver-rwes-i8f9pec94-mohammadikram008s-projects.vercel.app'];
-  const origin = req.headers.origin;
+app.use(cors());
+// app.use(cors({
+//   origin: ['http://localhost:3005', 'https://imdfx-newserver-rwes-i8f9pec94-mohammadikram008s-projects.vercel.app'],
+//   // other CORS options...
+// }));
+// CORS handling
+// app.use((req, res, next) => {
+//   // Allow requests from any origin
+//   res.header('Access-Control-Allow-Origin', '*');
+//   // Specify the headers that can be used during the actual request
+//   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+//   next();
+// });
 
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-
-  // other CORS options...
-  next();
-});
-
-app.use((req, res, next) => {
+// app.use((req, res, next) => {
   
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
-});
+//   res.header('Access-Control-Allow-Origin', '*');
+//   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+//   next();
+// });
 const PORT = process.env.PORT || 3006;
 // const router = require("./Routes/RouteLogins/User");
-app.get('/', async (req, res) => {
-  res.send("heloo")
-});
-app.post('/login', async (req, res) => {
-  console.log("login api call");
-    try {
-      const { email, password } = req.body;
-      // console.log(" email, password", email, password)
-      const user = await User.findOne({ email }).exec();
+// app.get('/', async (req, res) => {
+//   res.send("heloo")
+// });
+// app.post('/login', async (req, res) => {
+//   console.log("login api call");
+//     try {
+//       const { email, password } = req.body;
+//       // console.log(" email, password", email, password)
+//       const user = await User.findOne({ email }).exec();
   
-      if (!user) {
-        return res.status(404).json('User not found');
-      }
+//       if (!user) {
+//         return res.status(404).json('User not found');
+//       }
   
-      if (user.password !== password) {
-        return res.status(401).json('Invalid password');
-      }
-      // const secretKey = generateSecretKey();
-      // console.log(secretKey);
+//       if (user.password !== password) {
+//         return res.status(401).json('Invalid password');
+//       }
+//       // const secretKey = generateSecretKey();
+//       // console.log(secretKey);
   
-      // const token = jwt.sign({ email: user._id }, secretKey);
-      // console.log(token);
-      res.status(200).json(user._id);
-    } catch (error) {
-      res.status(500).json('Error finding user');
-      console.log("error",error);
-    }
-  });
- const router =require('./Routes/RouteLogins/User')
+//       // const token = jwt.sign({ email: user._id }, secretKey);
+//       // console.log(token);
+//       res.status(200).json(user._id);
+//     } catch (error) {
+//       res.status(500).json('Error finding user');
+//       console.log("error",error);
+//     }
+//   });
+//  const router =require('./Routes/RouteLogins/User')
 app.use('/api', router);
 // app.use('/uploads', express.static('uploads')); 
 // Connect to MongoDB
