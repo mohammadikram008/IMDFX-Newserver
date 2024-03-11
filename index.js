@@ -22,20 +22,22 @@ app.post('/login', async (req, res) => {
       const user = await User.findOne({ email }).exec();
   
       if (!user) {
-        return res.status(404).json('User not found');
+        // return res.status(404).json('User not found');
+console.log("User not found");
       }
   
       if (user.password !== password) {
         return res.status(401).json('Invalid password');
       }
-      const secretKey = generateSecretKey();
+      // const secretKey = generateSecretKey();
       // console.log(secretKey);
   
-      const token = jwt.sign({ email: user._id }, secretKey);
+      // const token = jwt.sign({ email: user._id }, secretKey);
       // console.log(token);
       res.status(200).json(user._id);
     } catch (error) {
       res.status(500).json('Error finding user');
+      console.log("error",error);
     }
   });
  const router =require('./Routes/RouteLogins/User')
