@@ -9,12 +9,14 @@ app.use(express.json());
 app.use(cors());
 const PORT = process.env.PORT || 3006;
 // const router = require("./Routes/RouteLogins/User");
+app.get('/', async (req, res) => {
+  res.send("heloo")
+});
  const router =require('./Routes/RouteLogins/User')
 app.use('/api', router);
 // app.use('/uploads', express.static('uploads')); 
 // Connect to MongoDB
 connection();
-
 
 
 
