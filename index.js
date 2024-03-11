@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3006;
 // const router = require("./Routes/RouteLogins/User");
  const router =require('./Routes/RouteLogins/User')
 app.use('/api', router);
-app.use('/uploads', express.static('uploads')); 
+// app.use('/uploads', express.static('uploads')); 
 // Connect to MongoDB
 connection();
 
