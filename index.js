@@ -40,6 +40,7 @@ app.post('/login', async (req, res) => {
 
     // const token = jwt.sign({ email: user._id }, secretKey);
     // console.log(token);
+    console.log("sjsjs")
     res.status(200).json(user._id);
   } catch (error) {
     res.status(500).json('Error finding user');
