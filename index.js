@@ -8,13 +8,13 @@ const { User } = require("./modals/Logins/UserLogin")
 const app = express();
 const cors = require("cors");
 app.use(express.json());
-app.use(cors({
-  origin: "*",
-  optionsSuccessStatus: "200",
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"],
-  credentials: true
-}));
+// app.use(cors({
+//   origin: "*",
+//   optionsSuccessStatus: "200",
+//   methods: ["GET", "POST"],
+//   allowedHeaders: ["Content-Type"],
+//   credentials: true
+// }));
 const PORT = process.env.PORT || 3006;
 // const router = require("./Routes/RouteLogins/User");
 app.get('/', async (req, res) => {
