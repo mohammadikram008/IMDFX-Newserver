@@ -58,7 +58,8 @@ const PORT = process.env.PORT || 3006;
 //       console.log("error",error);
 //     }
 //   });
-//  const router =require('./Routes/RouteLogins/User')
+
+ const router =require('./Routes/RouteLogins/User')
 app.use('/api', router);
 // app.use('/uploads', express.static('uploads')); 
 // Connect to MongoDB
