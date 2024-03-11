@@ -71,9 +71,9 @@ router.post('/signup', async (req, res) => {
     res.status(500).json('Error saving user to the database');
   }
 });
-router.get('/', async (req, res) => {
-  res.send("heloo")
-});
+// router.get('/', async (req, res) => {
+//   res.send("heloo")
+// });
 
 // user Login  route
 router.post('/login', async (req, res) => {
