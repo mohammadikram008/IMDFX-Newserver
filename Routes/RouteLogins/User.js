@@ -77,7 +77,7 @@ router.get('/', async (req, res) => {
 
 // user Login  route
 router.post('/login', async (req, res) => {
-
+console.log("login api call");
   try {
     const { email, password } = req.body;
     // console.log(" email, password", email, password)
