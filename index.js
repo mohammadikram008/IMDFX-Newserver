@@ -8,7 +8,9 @@ const { User } = require("./modals/Logins/UserLogin")
 const app = express();
 const cors = require("cors");
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: "*"
+}));
 const PORT = process.env.PORT || 3006;
 // const router = require("./Routes/RouteLogins/User");
 app.get('/', async (req, res) => {
@@ -17,31 +19,31 @@ app.get('/', async (req, res) => {
 });
 app.post('/', async (req, res) => {
   res.send("heloo login")
-//     try {
-//       const { email, password } = req.body;
-//       // console.log(" email, password", email, password)
-//       const user = await User.findOne({ email }).exec();
-  
-//       if (!user) {
-//         // return res.status(404).json('User not found');
-// console.log("User not found");
-//       }
-  
-//       if (user.password !== password) {
-//         return res.status(401).json('Invalid password');
-//       }
-//       // const secretKey = generateSecretKey();
-//       // console.log(secretKey);
-  
-//       // const token = jwt.sign({ email: user._id }, secretKey);
-//       // console.log(token);
-//       res.status(200).json(user._id);
-//     } catch (error) {
-//       res.status(500).json('Error finding user');
-//       console.log("error",error);
-//     }
-  });
- const router =require('./Routes/RouteLogins/User')
+  //     try {
+  //       const { email, password } = req.body;
+  //       // console.log(" email, password", email, password)
+  //       const user = await User.findOne({ email }).exec();
+
+  //       if (!user) {
+  //         // return res.status(404).json('User not found');
+  // console.log("User not found");
+  //       }
+
+  //       if (user.password !== password) {
+  //         return res.status(401).json('Invalid password');
+  //       }
+  //       // const secretKey = generateSecretKey();
+  //       // console.log(secretKey);
+
+  //       // const token = jwt.sign({ email: user._id }, secretKey);
+  //       // console.log(token);
+  //       res.status(200).json(user._id);
+  //     } catch (error) {
+  //       res.status(500).json('Error finding user');
+  //       console.log("error",error);
+  //     }
+});
+const router = require('./Routes/RouteLogins/User')
 app.use('/api', router);
 // app.use('/uploads', express.static('uploads')); 
 // Connect to MongoDB
