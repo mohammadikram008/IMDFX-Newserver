@@ -24,7 +24,7 @@ app.get('/', async (req, res) => {
 app.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    // console.log(" email, password", email, password)
+    console.log(" email, password", email, password)
     const user = await User.findOne({ email }).exec();
 
     if (!user) {
