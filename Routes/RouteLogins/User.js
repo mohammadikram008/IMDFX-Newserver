@@ -9,6 +9,7 @@ const { PatientProfile } = require("../../modals/PaitentProfile/PatientProfile")
 const { MedicalRecords } = require("../../modals/MedicalRecord/MedicalRecord")
 const { Prescriptions } = require("../../modals/Prescription/Prescription")
 const { office } = require("../../modals/AsOffice/Office")
+const { AvaibleTimes } = require("../../modals/DoctorAvaibleTime/AvaibleTime")
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
@@ -1224,4 +1225,29 @@ router.get('/gettodayappointments/:userId', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+//  save doctor available time thorugh doctor id
+router.post("/doc_avaibletime/:docId", async (req, res) => {
+
+  const { docId } = req.params.docId;
+  const { date, session1, session2 } = req.body;
+
+  try {
+    // Save doctor availability data to MongoDB
+    const doctorAvailability = new AvaibleTimes({
+      docId,
+      date,
+      session1,
+      session2,
+    });
+
+    await doctorAvailability.save();
+
+    res.status(200).json({ success: true, message: "Doctor availability saved successfully." });
+  } catch (error) {
+    console.error("Error saving doctor availability:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+});
+
 module.exports = router;
