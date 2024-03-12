@@ -1,15 +1,16 @@
 const mongoose = require('mongoose');
 
 const Prescription = new mongoose.Schema({
-    userId: { type: String, required: true },
-    doc_id: { type: String, required: true },
-    name: { type: String, required: true },
-    quantity: { type: String, required: true },
-    days: { type: String, required: true },
+    userId: { type: String, required: false },
+    doc_id: { type: String, required: false },
+    name: { type: String, required: false },
+    quantity: { type: String, required: false },
+    days: { type: String, required: false },
     morning: { type: Boolean, default: false },
     afternoon: { type: Boolean, default: false },
     evening: { type: Boolean, default: false },
     night: { type: Boolean, default: false },
+    image: { type: String , required: false}
     // date:{ type: String, required: false }
 
 });

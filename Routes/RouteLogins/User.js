@@ -13,8 +13,8 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
-// const multer = require('multer'); 
-// const upload = multer({ dest: 'uploads/' });
+const multer = require('multer'); 
+const upload = multer({ dest: 'uploads/' });
 const app = express();
 const cors = require("cors");
 
@@ -22,7 +22,7 @@ const { authenticateToken } = require('../../authentication');
 const { log } = require('console');
 app.use(cors());
 app.use(express.json());
-// app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static('uploads'));
 
 router.use((req, res, next) => {
   // Middleware logic here
@@ -160,7 +160,7 @@ router.get('/getpatient', async (req, res) => {
 
 //add doctor  details
 router.post('/doctorpersnoldetails',
-//  upload.single('image'),
+ upload.single('image'),
   async (req, res) => {
   try {
     const { body, file,verification } = req;
@@ -720,7 +720,7 @@ router.get("/mypayments/:userId", async (req, res) => {
 });
 // API endpoint for updating the profile
 router.post('/update-patient-profile/:userId', 
-// upload.single('image'),
+upload.single('image'),
  async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -774,7 +774,7 @@ router.post('/update-patient-profile/:userId',
 });
 
 router.post('/update-doctor-profile/:docId',
-//  upload.single('image'),
+ upload.single('image'),
   async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -1074,20 +1074,57 @@ router.post("/deletemedicaldetails/:userId", async (req, res) => {
   }
 });
 // add prescription 
-router.post('/Prescription', async (req, res) => {
-  try {
-    const formData = req.body;
-console.log("req",req.body);
-    // Save the form data to the database
-    const savedFormData = await Prescriptions.create(formData);
+// router.post('/Prescription', async (req, res) => {
+//   try {
+//     const formData = req.body;
+// console.log("req",req.body);
+//     // Save the form data to the database
+//     const savedFormData = await Prescriptions.create(formData);
 
-    res.status(201).json(savedFormData);
+//     res.status(201).json(savedFormData);
+//   } catch (error) {
+//     console.error('Error storing form data:', error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+router.post('/Prescription', upload.single('image'), async (req, res) => {
+  try {
+    // Extract form data from the request body
+    const {
+      userId,
+      doc_id,
+      name,
+      quantity,
+      days,
+      morning,
+      afternoon,
+      evening,
+      night
+    } = req.body;
+console.log("file",req.body);
+    // Create a new Prescription instance with the received data
+    const prescription = new Prescriptions({
+      userId,
+      doc_id,
+      name,
+      quantity,
+      days,
+      morning,
+      afternoon,
+      evening,
+      night,
+      image: req.file.filename // Assuming you store the file path in the database
+    });
+
+    // Save the prescription to the database
+    await prescription.save();
+
+    res.status(201).json({ message: 'Prescription submitted successfully!' });
   } catch (error) {
-    console.error('Error storing form data:', error);
+    console.error('Error submitting prescription:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 // get prescription with userid  
 router.get('/get-prescriptions/:userId', async (req, res) => {
