@@ -21,7 +21,7 @@ const doctorSchema = new mongoose.Schema({
     city: { type: String, required: false },
     state: { type: String, required: false },
     zipcode: { type: String, required: false },
-    doctors: [doctorSchema], // List of doctors associated with the hospital
+    // doctors: [doctorSchema], // List of doctors associated with the hospital
   });
 // const officeSchema = new mongoose.Schema({
 //   image: { type: String, required: true },

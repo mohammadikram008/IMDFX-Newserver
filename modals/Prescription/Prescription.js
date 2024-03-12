@@ -10,7 +10,9 @@ const Prescription = new mongoose.Schema({
     afternoon: { type: Boolean, default: false },
     evening: { type: Boolean, default: false },
     night: { type: Boolean, default: false },
-    image: { type: String , required: false}
+    image: { type: String , required: false},
+    reporttitle: { type: String , required: false},
+    reportcagatory: { type: String , required: false}
     // date:{ type: String, required: false }
 
 });

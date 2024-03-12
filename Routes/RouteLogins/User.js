@@ -1099,7 +1099,9 @@ router.post('/Prescription', upload.single('image'), async (req, res) => {
       morning,
       afternoon,
       evening,
-      night
+      night,
+      reporttitle,
+      reportcagatory
     } = req.body;
 console.log("file",req.body);
     // Create a new Prescription instance with the received data
@@ -1113,13 +1115,15 @@ console.log("file",req.body);
       afternoon,
       evening,
       night,
-      image: req.file.filename // Assuming you store the file path in the database
+      image: req.file.filename ,
+      reporttitle,
+      reportcagatory
     });
 
     // Save the prescription to the database
     await prescription.save();
 
-    res.status(201).json({ message: 'Prescription submitted successfully!' });
+    res.status(201).json('Prescription submitted successfully!' );
   } catch (error) {
     console.error('Error submitting prescription:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -1176,7 +1180,7 @@ router.post('/addOffice', async (req, res) => {
       city,
       state,
       zipcode,
-      doctors // Array of doctors
+      // doctors // Array of doctors
     } = req.body;
 
     const newOffice = new office({
@@ -1195,7 +1199,7 @@ router.post('/addOffice', async (req, res) => {
       city,
       state,
       zipcode,
-      doctors // Assign the array of doctors
+      // doctors // Assign the array of doctors
     });
 
     const savedOffice = await newOffice.save();
@@ -1203,6 +1207,21 @@ router.post('/addOffice', async (req, res) => {
   } catch (error) {
     console.error('Error adding office:', error);
     res.status(500).json('Internal Server Error');
+  }
+});
+
+//get current date appoitments
+// API endpoint to get appointments for the current date
+router.get('/gettodayappointments/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const userAppointments = await BookingAppointmentDetail.find({ userId: userId });
+    // const currentDate = moment().startOf('day'); 
+    // const appointments = await BookingAppointmentDetail.find({     date: { $gte: currentDate.toDate(), $lt: moment(currentDate).endOf('day').toDate() },});
+    res.json(userAppointments);
+  } catch (error) {
+    console.error('Error fetching appointments:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 module.exports = router;
