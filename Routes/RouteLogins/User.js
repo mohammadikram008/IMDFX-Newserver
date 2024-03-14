@@ -1459,7 +1459,7 @@ router.post('/office-accept-request', async (req, res) => {
 });
 
 
-// when doctor delete office
+// when doctor delete office tee
 router.post('/delele-doctor-office/:id', async (req, res) => {
   try {
     const id = req.params.id;
