@@ -1,13 +1,13 @@
 
 const mongoose = require('mongoose');
-const doctorSchema = new mongoose.Schema({
-    doc_id: { type: mongoose.Schema.Types.ObjectId, ref: 'DOCTORDETAILS' },
-    // You can include other fields related to the doctor here
-  });
+// const doctorSchema = new mongoose.Schema({
+//     doc_id: { type: mongoose.Schema.Types.ObjectId, ref: 'DOCTORDETAILS' },
+//     // You can include other fields related to the doctor here
+//   });
   
   const officeSchema = new mongoose.Schema({
-    image: { type: String, required: true },
-    name: { type: String, required: true },
+    image: { type: String, required: false },
+    name: { type: String, required: false },
     email: { type: String, required: false, unique: true },
     phone: { type: String, required: false, unique: true },
     password: { type: String, required: false },
@@ -104,7 +104,7 @@ const doctorSchema = new mongoose.Schema({
 //   }],
 // });
 
-const office = mongoose.model("officeSchema", officeSchema);
+const office = mongoose.model("Hospital", officeSchema);
 // const pendingdoctors = mongoose.model("PENDINGDOCTOR", Pendingdoctor);
 
 module.exports = { office };
