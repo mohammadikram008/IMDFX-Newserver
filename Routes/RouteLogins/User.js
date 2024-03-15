@@ -1004,7 +1004,6 @@ router.post("/medicaldetails/:userId", async (req, res) => {
   const userId = req.params.userId;
   try {
     const {
-
       bmi,
       hr,
       Weight,
@@ -1421,7 +1420,7 @@ console.log("officeID",doc_id);
 });
 
 
-// get multple doctor which is added in office 
+// get multple doctor office  which is added in office 
 router.post('/office-accept-request', async (req, res) => {
   try {
     const { doc_id } = req.body;
@@ -1437,17 +1436,24 @@ router.post('/office-accept-request', async (req, res) => {
     // Retrieve office details for each accepted request
     const officeDetails = await Promise.all(
       acceptedRequests.map(async (request) => {
+        console.log("Req",request);
         const officeDetail = await office.findOne({ _id: request.Hos_Id }).exec();
         if (!officeDetail) {
           // If office details not found for a request, return an error message
           return { message: `Office details not found for Hos_Id ${request.Hos_Id}` };
         }
+           // Add doc_id to officeDetail
+       // Add doc_id to officeDetail
+       const officeDetailWithDocId = { ...officeDetail._doc, doc_id: request.doc_id };
+       return officeDetailWithDocId;
         // return officeDetail;
-        return {
-          // ...prescription._doc,
-          ...request,
-          officeDetail,
-        };
+        // return {
+        //   ...prescription._doc,
+        //   ...request,
+        //   officeDetail,
+        //   doc_id: request.doc_id,
+        //   officeDetail,
+        // };
       })
     );
 
@@ -1524,13 +1530,13 @@ router.get('/gettodayappointments/:userId', async (req, res) => {
 //  save doctor available time thorugh doctor id
 router.post("/doc_avaibletime/:docId", async (req, res) => {
 
-  const { docId } = req.params.docId;
+  const { docId } = req.params;
   const { date, session1, session2 } = req.body;
-
+console.log("docId",docId);
   try {
     // Save doctor availability data to MongoDB
     const doctorAvailability = new AvaibleTimes({
-      docId,
+      doc_id:docId,
       date,
       session1,
       session2,
@@ -1545,6 +1551,25 @@ router.post("/doc_avaibletime/:docId", async (req, res) => {
   }
 });
 
+//get doctor avaibleTime with doctor id
+router.get("/get-doc_avaibletime/:docId", async (req, res) => {
+  const { docId } = req.params;
+  console.log("docId",docId);
+  const doc_id=docId
+  try {
+    // Find doctor availability data from MongoDB based on docId
+    const doctorAvailability = await AvaibleTimes.find({ doc_id });
+    console.log("doctorAvailability",doctorAvailability);
+    if (!doctorAvailability) {
+      return res.status(404).json("Doctor availability not found." );
+    }
+
+    res.status(200).json({ doctorAvailability });
+  } catch (error) {
+    console.error("Error fetching doctor availability:", error);
+    res.status(500).json( "Internal Server Error" );
+  }
+});
 
 
 module.exports = router;
