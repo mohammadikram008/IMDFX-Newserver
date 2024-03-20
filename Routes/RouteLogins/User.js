@@ -12,6 +12,7 @@ const { office } = require("../../modals/AsOffice/Office")
 const { HospitalRequests } = require("../../modals/AsOffice/HospitalRequest")
 const { HospitalAcceptedRequests } = require("../../modals/AsOffice/HospitalAcceptedRequest")
 const { AvaibleTimes } = require("../../modals/DoctorAvaibleTime/AvaibleTime")
+const { MedicalReport } = require("../../modals/MedicalReport/MedicalReport")
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
@@ -20,12 +21,12 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const app = express();
 const cors = require("cors");
+app.use('/uploads', express.static('uploads'));
 
 const { authenticateToken } = require('../../authentication');
 const { log } = require('console');
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
 
 router.use((req, res, next) => {
   // Middleware logic here
@@ -536,6 +537,46 @@ router.get("/doc_appointments/:docId", async (req, res) => {
   }
 });
 
+// get doctor confirm appointment with patient, doctorId  details
+router.get("/doc_confirm_appointments/:docId", async (req, res) => {
+
+  try {
+    const docId = req.params.docId;
+    console.log("docId", docId);
+    // Fetch all appointments for the user
+    const userAppointments = await ConformAppointment.find({ docId: docId });
+    // console.log("userAppointments", userAppointments);
+    if (!userAppointments || userAppointments.length === 0) {
+      return res.status(404).json({ error: 'Appointments not found' });
+    }
+    
+    // Prepare an array to store appointment details with doctor information
+    const appointmentsWithPatient = [];
+
+    // Iterate through each appointment
+    for (const appointment of userAppointments) {
+      // Fetch doctor details for each appointment
+      const userId=appointment.userId
+      const bookingdetails = await BookingAppointmentDetail.find({userId:userId, doc_id:docId});
+      const PatietnDetails = await User.findById(userId);
+
+      // Create an object with appointment and doctor details
+      const appointmentWithPatient = {
+        bookingdetails: bookingdetails,
+        PatietnDetails: PatietnDetails,
+      };
+
+      // Add the object to the array
+      appointmentsWithPatient.push(appointmentWithPatient);
+    }
+
+    res.status(200).json(appointmentsWithPatient);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 //when Doctor  conform  Appointment 
 router.post('/conformappointment/:docId', async (req, res) => {
@@ -794,6 +835,7 @@ router.post('/update-patient-profile/:userId',
     }
   });
 
+//doctor update own profile 
 router.post('/update-doctor-profile/:docId',
   upload.single('image'),
   async (req, res) => {
@@ -853,6 +895,7 @@ router.post('/update-doctor-profile/:docId',
 router.post("/change-user-password/:userId", async (req, res) => {
   try {
     const userId = req.params.userId;
+
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
     // Fetch user from the database
@@ -936,6 +979,8 @@ router.post('/reset-user-password', async (req, res) => {
 router.get('/doctors-by-specialty/:specialty', async (req, res) => {
   try {
     const specialization = req.params.specialty;
+
+
     const doctors = await doctordetails.find({ specialization });
 
     res.status(200).json(doctors);
@@ -1390,7 +1435,7 @@ router.post('/cancel-doctor-request/:id', async (req, res) => {
 router.get('/office-accepte-request/:doc_id', async (req, res) => {
   try {
     const doc_id = req.params.doc_id;
-console.log("officeID",doc_id);
+    console.log("officeID", doc_id);
     // Find accepted hospital requests for the specified doc_id
     const acceptedRequests = await HospitalAcceptedRequests.find({ doc_id });
     // console.log("acceptedRequests",acceptedRequests);
@@ -1436,16 +1481,16 @@ router.post('/office-accept-request', async (req, res) => {
     // Retrieve office details for each accepted request
     const officeDetails = await Promise.all(
       acceptedRequests.map(async (request) => {
-        console.log("Req",request);
+        console.log("Req", request);
         const officeDetail = await office.findOne({ _id: request.Hos_Id }).exec();
         if (!officeDetail) {
           // If office details not found for a request, return an error message
           return { message: `Office details not found for Hos_Id ${request.Hos_Id}` };
         }
-           // Add doc_id to officeDetail
-       // Add doc_id to officeDetail
-       const officeDetailWithDocId = { ...officeDetail._doc, doc_id: request.doc_id };
-       return officeDetailWithDocId;
+        // Add doc_id to officeDetail
+        // Add doc_id to officeDetail
+        const officeDetailWithDocId = { ...officeDetail._doc, doc_id: request.doc_id };
+        return officeDetailWithDocId;
         // return officeDetail;
         // return {
         //   ...prescription._doc,
@@ -1494,7 +1539,7 @@ router.get('/get-doctor-office/:Hos_Id', async (req, res) => {
     // Retrieve office details for each accepted request
     const doctorDetails = await Promise.all(
       acceptedRequests.map(async (request) => {
-        const doctorDetails = await doctordetails.findOne({ _id: request.doc_id}).exec();
+        const doctorDetails = await doctordetails.findOne({ _id: request.doc_id }).exec();
         // console.log("ofice",officeDetail);
         if (!doctorDetails) {
           // If office details not found for a request, return an error message
@@ -1532,11 +1577,11 @@ router.post("/doc_avaibletime/:docId", async (req, res) => {
 
   const { docId } = req.params;
   const { date, session1, session2 } = req.body;
-console.log("docId",docId);
+  console.log("docId", docId);
   try {
     // Save doctor availability data to MongoDB
     const doctorAvailability = new AvaibleTimes({
-      doc_id:docId,
+      doc_id: docId,
       date,
       session1,
       session2,
@@ -1554,22 +1599,217 @@ console.log("docId",docId);
 //get doctor avaibleTime with doctor id
 router.get("/get-doc_avaibletime/:docId", async (req, res) => {
   const { docId } = req.params;
-  console.log("docId",docId);
-  const doc_id=docId
+  console.log("docId", docId);
+  const doc_id = docId
   try {
     // Find doctor availability data from MongoDB based on docId
     const doctorAvailability = await AvaibleTimes.find({ doc_id });
-    console.log("doctorAvailability",doctorAvailability);
+    console.log("doctorAvailability", doctorAvailability);
     if (!doctorAvailability) {
-      return res.status(404).json("Doctor availability not found." );
+      return res.status(404).json("Doctor availability not found.");
     }
 
     res.status(200).json({ doctorAvailability });
   } catch (error) {
     console.error("Error fetching doctor availability:", error);
-    res.status(500).json( "Internal Server Error" );
+    res.status(500).json("Internal Server Error");
   }
 });
 
+
+// check doctor availability for booking at a specific time slot
+router.get('/check-doctor-availability/:doc_id/:timeSlot/:selectedDateData', async (req, res) => {
+  const { doc_id, timeSlot, selectedDateData } = req.params;
+  // console.log("id",doc_id,"timeslot",timeSlot,selectedDate);
+  try {
+    // Query the database to check if there is any existing booking for the doctor at the given time slot
+    const existingBooking = await BookingAppointmentDetail.findOne({
+      doc_id: doc_id,
+      selectedTimeSlot: timeSlot,
+      selectedDate: selectedDateData
+    });
+
+    if (existingBooking) {
+      // Doctor is not available at the specified time slot
+      res.status(200).json({ doc_id, timeSlot, available: false });
+    } else {
+      // Doctor is available at the specified time slot
+      res.status(200).json({ doc_id, timeSlot, available: true });
+    }
+  } catch (error) {
+    // Handle errors
+    console.error('Error checking doctor availability:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+// paitent upload medical Report 
+router.post('/medicalreport', upload.fields([
+  { name: 'BloodReport', maxCount: 1 },
+  { name: 'STscan', maxCount: 1 },
+  { name: 'MRI', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    const medicalReport = new MedicalReport({
+      userId,
+      BloodReport: req.files['BloodReport'] ? req.files['BloodReport'][0].path : null,
+      STscan: req.files['STscan'] ? req.files['STscan'][0].path : null,
+      MRI: req.files['MRI'] ? req.files['MRI'][0].path : null
+    });
+
+    await medicalReport.save();
+
+    res.status(201).json({ message: 'Medical report saved successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+// get patient Medical Report
+router.get('/getmedicalreport/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const medicalReports = await MedicalReport.find({ userId });
+
+    // Map over the medical reports and replace file paths with file data
+    const reportsWithFiles = medicalReports.map(report => ({
+      _id: report._id,
+      userId: report.userId,
+      BloodReport: report.BloodReport ? fs.readFileSync(report.BloodReport, 'base64') : null,
+      STscan: report.STscan ? fs.readFileSync(report.STscan, 'base64') : null,
+      MRI: report.MRI ? fs.readFileSync(report.MRI, 'base64') : null,
+    }));
+
+    res.status(200).json(reportsWithFiles);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+///search doctor location 
+// Route handler for /api/search-location
+router.get('/search-location', async (req, res) => {
+  const { query } = req.query; // Get the query string from the request URL
+  console.log("query", query);
+  try {
+    // Perform a case-insensitive search for doctors with locations matching the query
+    const searchResults = await doctordetails.find({
+      city: { $regex: query, $options: 'i' }
+    });
+    console.log("searchResults", searchResults);
+    res.json(searchResults); // Return the search results as JSON response
+  } catch (error) {
+    console.error('Error searching location in DoctorDetail:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+/// Update office own profile 
+router.post('/update-office-profile/:officeId', upload.single('image'), async (req, res) => {
+  try {
+    const officeId = req.params.officeId;
+    console.log("body", req.body);
+    const {
+      
+      email,
+      phone,
+      officename,
+      officeemail,
+      officephone,
+      officewebsite,
+      officespecialty,
+      country,
+      street,
+      city,
+      state,
+      zipcode,
+      file
+    } = req.body;
+
+    // Find the office profile by ID
+    const officeProfile = await office.findOne({ _id: officeId });
+    if (!officeProfile) {
+      return res.status(404).json({ message: 'Office Profile not found' });
+    }
+
+    // Update the existing office profile with the received data
+  
+    officeProfile.email = email;
+    officeProfile.phone = phone;
+    officeProfile.officename = officename;
+    officeProfile.officeemail = officeemail;
+    officeProfile.officephone = officephone;
+    officeProfile.officewebsite = officewebsite;
+    officeProfile.officespecialty = officespecialty;
+    officeProfile.country = country;
+    officeProfile.street = street;
+    officeProfile.city = city;
+    officeProfile.state = state;
+    officeProfile.zipcode = zipcode;
+    officeProfile.image = file ? file.path : officeProfile.image; // If a new image is provided, update it
+
+    // Save the updated profile to the database
+    await officeProfile.save();
+
+    res.status(200).json('Office Profile updated successfully');
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json('Error updating profile');
+  }
+});
+
+//get signle office detail
+router.get('/getofficeDetail/:officeId', async (req, res) => {
+  try {
+    const { officeId } = req.params;
+    console.log("officeId", officeId);
+    // Find the office details based on the ID
+    const OfficeDetail = await office.findOne({ _id: officeId });
+    console.log("OfficeDetail", OfficeDetail);
+    if (!OfficeDetail) {
+      return res.status(404).json({ error: 'Office not found' });
+    }
+
+    // Send the office details as a JSON response
+    res.status(200).json(OfficeDetail);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error retrieving doctor details', details: error.message });
+  }
+});
+
+
+// change password of Office 
+router.post("/change-office-password/:officeId", async (req, res) => {
+  try {
+    const officeId = req.params.officeId;
+    console.log(officeId);
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    // Fetch user from the database
+    const offices = await office.findById(officeId);
+
+    // Check if the old password matches the stored password
+    if (offices && offices.password === oldPassword) {
+      // Update the password if old password matches
+      offices.password = newPassword;
+
+      await offices.save();
+      res.status(200).json("Password changed successfully");
+    } else {
+      res.status(400).json("Old password is incorrect");
+    }
+  } catch (error) {
+    console.error("Error changing password:", error);
+    res.status(500).json("Error changing password");
+  }
+});
 
 module.exports = router;
