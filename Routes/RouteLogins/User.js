@@ -998,7 +998,7 @@ router.get('/appointment-alldetails', async (req, res) => {
     // console.log("appointments",appointments);
     const appointmentsWithDetails = await Promise.all(
       appointments.map(async (appointment) => {
-        console.log("appointment", appointment.doc_id);
+        // console.log("appointment", appointment.doc_id);
         const doctorDetail = await doctordetails.findById({ _id: appointment.doc_id });
         const userDetail = await User.findById({ _id: appointment.userId });
 
