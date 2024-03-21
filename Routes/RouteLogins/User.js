@@ -1812,4 +1812,46 @@ router.post("/change-office-password/:officeId", async (req, res) => {
   }
 });
 
+
+// admin update patient status
+router.put('/update-patient-status/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Find the patient by ID and update the status
+    const patient = await User.findByIdAndUpdate(id, { status }, { new: true });
+
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+
+    // Return the updated patient
+    res.status(200).json(patient);
+  } catch (error) {
+    console.error('Error updating patient status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+// admin update doctors status
+router.put('/update-doctor-status/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Find the doctor by ID and update the status
+    const doctor = await doctordetails.findByIdAndUpdate(id, { status }, { new: true });
+
+    if (!doctor) {
+      return res.status(404).json({ message: 'Doctor not found' });
+    }
+
+    // Return the updated patient
+    res.status(200).json(doctor);
+  } catch (error) {
+    console.error('Error updating patient status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
