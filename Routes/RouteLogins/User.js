@@ -12,7 +12,9 @@ const { office } = require("../../modals/AsOffice/Office")
 const { HospitalRequests } = require("../../modals/AsOffice/HospitalRequest")
 const { HospitalAcceptedRequests } = require("../../modals/AsOffice/HospitalAcceptedRequest")
 const { AvaibleTimes } = require("../../modals/DoctorAvaibleTime/AvaibleTime")
-const { MedicalReport } = require("../../modals/MedicalReport/MedicalReport")
+const { MedicalReport } = require("../../modals/MedicalReport/MedicalReport");
+const { Wallet } = require("../../modals/Wallet/Wallet");
+
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
@@ -374,7 +376,7 @@ router.post('/bookappointment', async (req, res) => {
       userId,
       Fees } = req.body;
 
-    // console.log(
+    // console.log(Fees)
     //   bookingType,
     //   gender,
     //   patientAge,
@@ -748,32 +750,7 @@ router.get("/mypayments/:userId", async (req, res) => {
 
   try {
     const userId = req.params.userId;
-
-    // Fetch all appointments for the user
-    const payments = await BookingAppointmentDetail.find({ userId: userId });
-    // console.log("userAppointments", userAppointments);
-    // if (!userAppointments || userAppointments.length === 0) {
-    //   return res.status(404).json({ error: 'Appointments not found' });
-    // }
-
-    // // Prepare an array to store appointment details with doctor information
-    // const appointmentsWithPatient = [];
-
-    // // Iterate through each appointment
-    // for (const appointment of userAppointments) {
-    //   // Fetch doctor details for each appointment
-    //   const doctorDetails = await doctordetails.findById(appointment.docId);
-
-    //   // Create an object with appointment and doctor details
-    //   const appointmentWithPatient = {
-    //     appointmentDetails: appointment,
-    //     doctorDetails: doctorDetails,
-    //   };
-
-    //   // Add the object to the array
-    //   appointmentsWithPatient.push(appointmentWithPatient);
-    // }
-
+    const payments = await Wallet.find({ userId: userId });
     res.status(200).json(payments);
   } catch (error) {
     console.error(error);
@@ -979,10 +956,7 @@ router.post('/reset-user-password', async (req, res) => {
 router.get('/doctors-by-specialty/:specialty', async (req, res) => {
   try {
     const specialization = req.params.specialty;
-
-
     const doctors = await doctordetails.find({ specialization });
-
     res.status(200).json(doctors);
   } catch (error) {
     console.error('Error fetching doctors by specialty:', error);
@@ -1573,28 +1547,63 @@ router.get('/gettodayappointments/:userId', async (req, res) => {
 
 
 //  save doctor available time thorugh doctor id
-router.post("/doc_avaibletime/:docId", async (req, res) => {
+// router.post("/doc_avaibletime/:docId", async (req, res) => {
 
+//   const { docId } = req.params;
+//   const { date, session1, session2 } = req.body;
+//   console.log("docId", docId);
+//   try {
+//     // Save doctor availability data to MongoDB
+//     const doctorAvailability = new AvaibleTimes({
+//       doc_id: docId,
+//       date,
+//       session1,
+//       session2,
+//     });
+
+//     await doctorAvailability.save();
+
+//     res.status(200).json({ success: true, message: "Doctor availability saved successfully." });
+//   } catch (error) {
+//     console.error("Error saving doctor availability:", error);
+//     res.status(500).json({ success: false, message: "Internal Server Error" });
+//   }
+// });
+router.post("/doc_avaibletime/:docId", async (req, res) => {
   const { docId } = req.params;
   const { date, session1, session2 } = req.body;
-  console.log("docId", docId);
+
   try {
-    // Save doctor availability data to MongoDB
-    const doctorAvailability = new AvaibleTimes({
-      doc_id: docId,
-      date,
-      session1,
-      session2,
-    });
+    // Check if availability entry already exists for the given date and session
+    const existingAvailability = await AvaibleTimes.findOne({ doc_id: docId, date: date });
 
-    await doctorAvailability.save();
+    if (existingAvailability) {
+      // If entry already exists, update the session data if needed
+      existingAvailability.session1 = session1;
+      existingAvailability.session2 = session2;
 
-    res.status(200).json({ success: true, message: "Doctor availability saved successfully." });
+      await existingAvailability.save();
+
+      res.status(200).json({ success: true, message: "Doctor availability updated successfully." });
+    } else {
+      // If entry does not exist, create a new entry
+      const doctorAvailability = new AvaibleTimes({
+        doc_id: docId,
+        date,
+        session1,
+        session2,
+      });
+
+      await doctorAvailability.save();
+
+      res.status(200).json({ success: true, message: "Doctor availability saved successfully." });
+    }
   } catch (error) {
-    console.error("Error saving doctor availability:", error);
+    console.error("Error saving/updating doctor availability:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
+
 
 //get doctor avaibleTime with doctor id
 router.get("/get-doc_avaibletime/:docId", async (req, res) => {
@@ -1854,4 +1863,34 @@ router.put('/update-doctor-status/:id', async (req, res) => {
   }
 });
 
+
+//add payment to user walllat
+router.post('/addpaymentwallet/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+      const { Amount } = req.body;
+      const wallet = new Wallet({ userId, Amount });
+      await wallet.save();
+      res.status(201).json({ message: 'Wallet data saved successfully' });
+  } catch (error) {
+      console.error('Error saving wallet data:', error);
+      res.status(500).json({ error: 'Failed to save wallet data' });
+  }
+});
+
+// API endpoint to retrieve data from the database
+router.get('/wallet/:userId', async (req, res) => {
+  try {
+      const userId = req.params.userId;
+      const walletData = await Wallet.findOne({ userId });
+      if (walletData) {
+          res.status(200).json(walletData);
+      } else {
+          res.status(404).json({ message: 'Wallet data not found for the user' });
+      }
+  } catch (error) {
+      console.error('Error fetching wallet data:', error);
+      res.status(500).json({ error: 'Failed to fetch wallet data' });
+  }
+});
 module.exports = router;
