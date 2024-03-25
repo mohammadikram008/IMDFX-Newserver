@@ -374,6 +374,7 @@ router.post('/bookappointment', async (req, res) => {
       doc_id,
       bookingDate,
       userId,
+      details,
       Fees } = req.body;
 
     // console.log(Fees)
@@ -405,7 +406,8 @@ router.post('/bookappointment', async (req, res) => {
       selectedTimeSlot: selectedTimeSlot,
       bookingDate: bookingDate,
       bookingFor: bookingFor,
-      userId, userId,
+      userId: userId,
+      details:details,
       Fees: Fees
     });
     const newBookAppointmentDetail = new BookingAppointmentDetail({
@@ -423,7 +425,8 @@ router.post('/bookappointment', async (req, res) => {
       selectedTimeSlot: selectedTimeSlot,
       bookingDate: bookingDate,
       bookingFor: bookingFor,
-      userId, userId,
+      details:details,
+      userId: userId,
       Fees: Fees
     });
     console.log("newBookAppointment", newBookAppointment);
@@ -689,10 +692,13 @@ router.get("/mypatient/:docId", async (req, res) => {
     for (const appointment of userAppointments) {
       // Fetch doctor details for each appointment
       const PatietnDetails = await User.findById(appointment.userId);
+      const docId=appointment.docId
+      const userId=appointment.userId
+      const appointmentDetail = await BookingAppointmentDetail.find({doc_id:docId,userId:userId});
 
       // Create an object with appointment and doctor details
       const appointmentWithPatient = {
-        appointmentDetails: appointment,
+        appointmentDetails: appointmentDetail,
         PatietnDetails: PatietnDetails,
       };
 

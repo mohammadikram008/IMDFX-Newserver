@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const bookappointment = new mongoose.Schema({
     doc_id: { type: String, required: false },
     userId: { type: String, required: false },
-    bookingType: { type: String, required: false },
+    Details: { type: String, required: false },
     gender: { type: String, required: false },
     patientAge: { type: String, required: false },
     expiryYear: { type: String, required: false },
@@ -21,7 +21,7 @@ const bookappointment = new mongoose.Schema({
 const bookappointmentdetail = new mongoose.Schema({
     doc_id: { type: String, required: false },
     userId: { type: String, required: false },
-    bookingType: { type: String, required: false },
+    Details: { type: String, required: false },
     gender: { type: String, required: false },
     patientAge: { type: String, required: false },
     expiryYear: { type: String, required: false },
