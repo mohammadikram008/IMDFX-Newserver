@@ -1,5 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const http = require("http");
+const socketIo = require("socket.io");
+
 const { User } = require("../../modals/Logins/UserLogin");
 const { doctordetails, pendingdoctors } = require("../../modals/DoctorDetails/Index")
 const { BookingAppointment, BookingAppointmentDetail } = require("../../modals/BookAppointment/BookAppointment")
@@ -24,6 +27,10 @@ const upload = multer({ dest: 'uploads/' });
 const app = express();
 const cors = require("cors");
 app.use('/uploads', express.static('uploads'));
+
+
+const server = http.createServer(app);
+const io = socketIo(server);
 
 const { authenticateToken } = require('../../authentication');
 const { log } = require('console');
@@ -58,6 +65,23 @@ const transporter = nodemailer.createTransport({
 //       pass: process.env.PASS,
 //   }
 // });
+
+// Socket.IO logic
+io.on("connection", (socket) => {
+  console.log("New client connected");
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected");
+  });
+
+// Handle doctor joining room
+socket.on("doctorJoinRoom", (doctorId, userId) => {
+  // Notify patient that the doctor is online
+  io.to(userId).emit("doctorOnlineNotification", "Your doctor is online. Join the room.");
+});
+});
+
+
 // Signup route
 router.post('/signup', async (req, res) => {
   try {
