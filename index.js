@@ -45,7 +45,7 @@ io.on('connection', function (socket) {
     socket.on("doctorJoinRoom", (doctorId, userId) => {
       console.log(`Doctor ${doctorId} joined room for user ${userId}`);
       // Notify patient that the doctor is online
-      io.emit("doctorOnlineNotification", "Your doctor is online. Join the room.");
+      io.emit("doctorOnlineNotification", `Your doctor ${doctorId} . Join the room.`);
     });
 });
 
