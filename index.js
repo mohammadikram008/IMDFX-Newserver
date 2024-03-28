@@ -47,6 +47,11 @@ io.on('connection', function (socket) {
       // Notify patient that the doctor is online
       io.emit("doctorOnlineNotification", `Your doctor ${doctorId}`);
     });
+    socket.on("patientrejectcall", (roomId, userId) => {
+      console.log(`Doctor ${roomId} joined room for user ${userId}`);
+      // Notify patient that the doctor is online
+      io.emit("patientnotAvaible", `Your Patient Reject the call`);
+    });
 });
 
 const PORT = process.env.PORT || 3006;

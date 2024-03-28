@@ -431,7 +431,7 @@ router.post('/bookappointment', async (req, res) => {
       bookingDate: bookingDate,
       bookingFor: bookingFor,
       userId: userId,
-      details:details,
+      Details:details,
       Fees: Fees
     });
     const newBookAppointmentDetail = new BookingAppointmentDetail({
@@ -449,7 +449,7 @@ router.post('/bookappointment', async (req, res) => {
       selectedTimeSlot: selectedTimeSlot,
       bookingDate: bookingDate,
       bookingFor: bookingFor,
-      details:details,
+      Details:details,
       userId: userId,
       Fees: Fees
     });
@@ -775,12 +775,26 @@ router.get("/mydoctor/:userId", async (req, res) => {
   }
 });
 
-// get peyment details, patient id  for patient dashboard
+// get  user peyment details, patient id  for patient dashboard
 router.get("/mypayments/:userId", async (req, res) => {
 
   try {
     const userId = req.params.userId;
     const payments = await Wallet.find({ userId: userId });
+    res.status(200).json(payments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+// get doctor transaction, peyment details, patient id  for patient dashboard
+router.get("/doctorTransactions/:doc_id", async (req, res) => {
+
+  try {
+    const doc_id = req.params.doc_id;
+    const payments = await Wallet.find({ doc_id: doc_id });
     res.status(200).json(payments);
   } catch (error) {
     console.error(error);
@@ -1895,11 +1909,13 @@ router.put('/update-doctor-status/:id', async (req, res) => {
 
 
 //add payment to user walllat
-router.post('/addpaymentwallet/:userId', async (req, res) => {
+router.post('/addpaymentwallet/:userId/:doc_id', async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId ,doc_id} = req.params;
+    console.log(userId,"+",doc_id);
       const { Amount } = req.body;
-      const wallet = new Wallet({ userId, Amount });
+      const wallet = new Wallet({ userId,doc_id, Amount });
+      console.log("wallet",wallet);
       await wallet.save();
       res.status(201).json({ message: 'Wallet data saved successfully' });
   } catch (error) {
