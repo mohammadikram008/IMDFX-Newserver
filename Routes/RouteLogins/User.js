@@ -1939,4 +1939,20 @@ router.get('/wallet/:userId', async (req, res) => {
       res.status(500).json({ error: 'Failed to fetch wallet data' });
   }
 });
+
+// check doctor exist in hospital or not
+router.get('/check-doctor-office/:doc_id', async (req, res) => {
+  try {
+      const doc_id = req.params.doc_id;
+      const doctor = await HospitalAcceptedRequests.findOne({ doc_id });
+      if (doctor) {
+          res.status(200).json(doctor);
+      } else {
+          res.status(404).json( 'Doctor is not found any hospital' );
+      }
+  } catch (error) {
+      console.error('Error fetching wallet data:', error);
+      res.status(500).json({ error: 'Failed to fetch wallet data' });
+  }
+});
 module.exports = router;
