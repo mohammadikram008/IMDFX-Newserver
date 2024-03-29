@@ -1752,7 +1752,7 @@ router.get('/getmedicalreport/:userId', async (req, res) => {
     //   MRI: report.MRI ? fs.readFileSync(report.MRI, 'base64') : null,
     // }));
 
-    res.status(200).json(reportsWithFiles);
+    res.status(200).json(medicalReports);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
