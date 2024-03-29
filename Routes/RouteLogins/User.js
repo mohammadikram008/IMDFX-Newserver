@@ -1744,15 +1744,15 @@ router.get('/getmedicalreport/:userId', async (req, res) => {
     const medicalReports = await MedicalReport.find({ userId });
 
     // Map over the medical reports and replace file paths with file data
-    // const reportsWithFiles = medicalReports.map(report => ({
-    //   _id: report._id,
-    //   userId: report.userId,
-    //   BloodReport: report.BloodReport ? fs.readFileSync(report.BloodReport, 'base64') : null,
-    //   STscan: report.STscan ? fs.readFileSync(report.STscan, 'base64') : null,
-    //   MRI: report.MRI ? fs.readFileSync(report.MRI, 'base64') : null,
-    // }));
+    const reportsWithFiles = medicalReports.map(report => ({
+      _id: report._id,
+      userId: report.userId,
+      BloodReport: report.BloodReport ? fs.readFileSync(report.BloodReport, 'base64') : null,
+      STscan: report.STscan ? fs.readFileSync(report.STscan, 'base64') : null,
+      MRI: report.MRI ? fs.readFileSync(report.MRI, 'base64') : null,
+    }));
 
-    res.status(200).json(medicalReports);
+    res.status(200).json(reportsWithFiles);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
