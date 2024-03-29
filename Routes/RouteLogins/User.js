@@ -1719,7 +1719,7 @@ router.post('/medicalreport/:userId', upload.fields([
   try {
     // const { userId } = req.body;
     const { userId } = req.params;
-
+    console.log("reQ", req.body);
     const medicalReport = new MedicalReport({
       userId,
       BloodReport: req.files['BloodReport'] ? req.files['BloodReport'][0].path : null,
@@ -1744,13 +1744,13 @@ router.get('/getmedicalreport/:userId', async (req, res) => {
     const medicalReports = await MedicalReport.find({ userId });
 
     // Map over the medical reports and replace file paths with file data
-    const reportsWithFiles = medicalReports.map(report => ({
-      _id: report._id,
-      userId: report.userId,
-      BloodReport: report.BloodReport ? fs.readFileSync(report.BloodReport, 'base64') : null,
-      STscan: report.STscan ? fs.readFileSync(report.STscan, 'base64') : null,
-      MRI: report.MRI ? fs.readFileSync(report.MRI, 'base64') : null,
-    }));
+    // const reportsWithFiles = medicalReports.map(report => ({
+    //   _id: report._id,
+    //   userId: report.userId,
+    //   BloodReport: report.BloodReport ? fs.readFileSync(report.BloodReport, 'base64') : null,
+    //   STscan: report.STscan ? fs.readFileSync(report.STscan, 'base64') : null,
+    //   MRI: report.MRI ? fs.readFileSync(report.MRI, 'base64') : null,
+    // }));
 
     res.status(200).json(reportsWithFiles);
   } catch (err) {
@@ -1973,6 +1973,7 @@ router.get('/check-doctor-office/:doc_id', async (req, res) => {
 ///add save doctor time slots
 router.post('/doctorAvailableTimings', async (req, res) => {
   const { doc_id, startDate, endDate, sessions } = req.body;
+  console.log("startDate",startDate,"startDate",startDate);
   try {
     // Check if a record already exists for the given doctor ID and start date
     let availableTiming = await AvailableTimings.findOne({ doc_id, startDate });
@@ -2005,4 +2006,27 @@ router.post('/doctorAvailableTimings', async (req, res) => {
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+// GET API endpoint to retrieve available timings for a doctor within a date range
+router.get('/doctorAvailableTimings/:docId', async (req, res) => {
+  const { docId } = req.params;
+  const { startDate } = req.query;
+
+  try {
+    // Query the database for available timings for the specified doctor and date range
+    const availableTimings = await AvailableTimings.find({
+      doc_id: docId,
+      startDate: { $gte: startDate },
+
+    });
+
+    res.status(200).json(availableTimings);
+  } catch (error) {
+    console.error('Error fetching available timings:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+
 module.exports = router;
