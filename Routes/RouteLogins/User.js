@@ -15,6 +15,7 @@ const { office } = require("../../modals/AsOffice/Office")
 const { HospitalRequests } = require("../../modals/AsOffice/HospitalRequest")
 const { HospitalAcceptedRequests } = require("../../modals/AsOffice/HospitalAcceptedRequest")
 const { AvaibleTimes } = require("../../modals/DoctorAvaibleTime/AvaibleTime")
+const { AvailableTimings } = require("../../modals/DoctorAvaibleTime/DoctorTimes")
 const { MedicalReport } = require("../../modals/MedicalReport/MedicalReport");
 const { Wallet } = require("../../modals/Wallet/Wallet");
 
@@ -74,11 +75,11 @@ io.on("connection", (socket) => {
     console.log("Client disconnected");
   });
 
-// Handle doctor joining room
-socket.on("doctorJoinRoom", (doctorId, userId) => {
-  // Notify patient that the doctor is online
-  io.to(userId).emit("doctorOnlineNotification", "Your doctor is online. Join the room.");
-});
+  // Handle doctor joining room
+  socket.on("doctorJoinRoom", (doctorId, userId) => {
+    // Notify patient that the doctor is online
+    io.to(userId).emit("doctorOnlineNotification", "Your doctor is online. Join the room.");
+  });
 });
 
 
@@ -431,7 +432,7 @@ router.post('/bookappointment', async (req, res) => {
       bookingDate: bookingDate,
       bookingFor: bookingFor,
       userId: userId,
-      Details:details,
+      Details: details,
       Fees: Fees
     });
     const newBookAppointmentDetail = new BookingAppointmentDetail({
@@ -449,7 +450,7 @@ router.post('/bookappointment', async (req, res) => {
       selectedTimeSlot: selectedTimeSlot,
       bookingDate: bookingDate,
       bookingFor: bookingFor,
-      Details:details,
+      Details: details,
       userId: userId,
       Fees: Fees
     });
@@ -578,15 +579,15 @@ router.get("/doc_confirm_appointments/:docId", async (req, res) => {
     if (!userAppointments || userAppointments.length === 0) {
       return res.status(404).json({ error: 'Appointments not found' });
     }
-    
+
     // Prepare an array to store appointment details with doctor information
     const appointmentsWithPatient = [];
 
     // Iterate through each appointment
     for (const appointment of userAppointments) {
       // Fetch doctor details for each appointment
-      const userId=appointment.userId
-      const bookingdetails = await BookingAppointmentDetail.find({userId:userId, doc_id:docId});
+      const userId = appointment.userId
+      const bookingdetails = await BookingAppointmentDetail.find({ userId: userId, doc_id: docId });
       const PatietnDetails = await User.findById(userId);
 
       // Create an object with appointment and doctor details
@@ -716,9 +717,9 @@ router.get("/mypatient/:docId", async (req, res) => {
     for (const appointment of userAppointments) {
       // Fetch doctor details for each appointment
       const PatietnDetails = await User.findById(appointment.userId);
-      const docId=appointment.docId
-      const userId=appointment.userId
-      const appointmentDetail = await BookingAppointmentDetail.find({doc_id:docId,userId:userId});
+      const docId = appointment.docId
+      const userId = appointment.userId
+      const appointmentDetail = await BookingAppointmentDetail.find({ doc_id: docId, userId: userId });
 
       // Create an object with appointment and doctor details
       const appointmentWithPatient = {
@@ -1616,32 +1617,44 @@ router.get('/gettodayappointments/:userId', async (req, res) => {
 router.post("/doc_avaibletime/:docId", async (req, res) => {
   const { docId } = req.params;
   const { date, session1, session2 } = req.body;
+  console.log("req.body", req.body);
 
   try {
+
+    const doctorAvailability = new AvaibleTimes({
+      doc_id: docId,
+      date,
+      session1,
+      session2,
+    });
+
+    await doctorAvailability.save();
+
+    res.status(200).json({ success: true, message: "Doctor availability saved successfully." });
     // Check if availability entry already exists for the given date and session
-    const existingAvailability = await AvaibleTimes.findOne({ doc_id: docId, date: date });
+    // const existingAvailability = await AvaibleTimes.findOne({ doc_id: docId, date: date });
 
-    if (existingAvailability) {
-      // If entry already exists, update the session data if needed
-      existingAvailability.session1 = session1;
-      existingAvailability.session2 = session2;
+    // if (existingAvailability) {
 
-      await existingAvailability.save();
+    //   existingAvailability.session1 = session1;
+    //   existingAvailability.session2 = session2;
 
-      res.status(200).json({ success: true, message: "Doctor availability updated successfully." });
-    } else {
-      // If entry does not exist, create a new entry
-      const doctorAvailability = new AvaibleTimes({
-        doc_id: docId,
-        date,
-        session1,
-        session2,
-      });
+    //   await existingAvailability.save();
 
-      await doctorAvailability.save();
+    //   res.status(200).json({ success: true, message: "Doctor availability updated successfully." });
+    // } else {
 
-      res.status(200).json({ success: true, message: "Doctor availability saved successfully." });
-    }
+    //   const doctorAvailability = new AvaibleTimes({
+    //     doc_id: docId,
+    //     date,
+    //     session1,
+    //     session2,
+    //   });
+
+    //   await doctorAvailability.save();
+
+    //   res.status(200).json({ success: true, message: "Doctor availability saved successfully." });
+    // }
   } catch (error) {
     console.error("Error saving/updating doctor availability:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -1656,7 +1669,7 @@ router.get("/get-doc_avaibletime/:docId", async (req, res) => {
   const doc_id = docId
   try {
     // Find doctor availability data from MongoDB based on docId
-    const doctorAvailability = await AvaibleTimes.find({ doc_id });
+    const doctorAvailability = await AvailableTimings.find({ doc_id });
     console.log("doctorAvailability", doctorAvailability);
     if (!doctorAvailability) {
       return res.status(404).json("Doctor availability not found.");
@@ -1698,13 +1711,14 @@ router.get('/check-doctor-availability/:doc_id/:timeSlot/:selectedDateData', asy
 
 
 // paitent upload medical Report 
-router.post('/medicalreport', upload.fields([
+router.post('/medicalreport/:userId', upload.fields([
   { name: 'BloodReport', maxCount: 1 },
   { name: 'STscan', maxCount: 1 },
   { name: 'MRI', maxCount: 1 }
 ]), async (req, res) => {
   try {
-    const { userId } = req.body;
+    // const { userId } = req.body;
+    const { userId } = req.params;
 
     const medicalReport = new MedicalReport({
       userId,
@@ -1770,7 +1784,7 @@ router.post('/update-office-profile/:officeId', upload.single('image'), async (r
     const officeId = req.params.officeId;
     console.log("body", req.body);
     const {
-      
+
       email,
       phone,
       officename,
@@ -1793,7 +1807,7 @@ router.post('/update-office-profile/:officeId', upload.single('image'), async (r
     }
 
     // Update the existing office profile with the received data
-  
+
     officeProfile.email = email;
     officeProfile.phone = phone;
     officeProfile.officename = officename;
@@ -1911,48 +1925,84 @@ router.put('/update-doctor-status/:id', async (req, res) => {
 //add payment to user walllat
 router.post('/addpaymentwallet/:userId/:doc_id', async (req, res) => {
   try {
-    const { userId ,doc_id} = req.params;
-    console.log(userId,"+",doc_id);
-      const { Amount } = req.body;
-      const wallet = new Wallet({ userId,doc_id, Amount });
-      console.log("wallet",wallet);
-      await wallet.save();
-      res.status(201).json({ message: 'Wallet data saved successfully' });
+    const { userId, doc_id } = req.params;
+    console.log(userId, "+", doc_id);
+    const { Amount } = req.body;
+    const wallet = new Wallet({ userId, doc_id, Amount });
+    console.log("wallet", wallet);
+    await wallet.save();
+    res.status(201).json({ message: 'Wallet data saved successfully' });
   } catch (error) {
-      console.error('Error saving wallet data:', error);
-      res.status(500).json({ error: 'Failed to save wallet data' });
+    console.error('Error saving wallet data:', error);
+    res.status(500).json({ error: 'Failed to save wallet data' });
   }
 });
 
 // API endpoint to retrieve data from the database
 router.get('/wallet/:userId', async (req, res) => {
   try {
-      const userId = req.params.userId;
-      const walletData = await Wallet.findOne({ userId });
-      if (walletData) {
-          res.status(200).json(walletData);
-      } else {
-          res.status(404).json({ message: 'Wallet data not found for the user' });
-      }
+    const userId = req.params.userId;
+    const walletData = await Wallet.findOne({ userId });
+    if (walletData) {
+      res.status(200).json(walletData);
+    } else {
+      res.status(404).json({ message: 'Wallet data not found for the user' });
+    }
   } catch (error) {
-      console.error('Error fetching wallet data:', error);
-      res.status(500).json({ error: 'Failed to fetch wallet data' });
+    console.error('Error fetching wallet data:', error);
+    res.status(500).json({ error: 'Failed to fetch wallet data' });
   }
 });
 
 // check doctor exist in hospital or not
 router.get('/check-doctor-office/:doc_id', async (req, res) => {
   try {
-      const doc_id = req.params.doc_id;
-      const doctor = await HospitalAcceptedRequests.findOne({ doc_id });
-      if (doctor) {
-          res.status(200).json(doctor);
-      } else {
-          res.status(404).json( 'Doctor is not found any hospital' );
-      }
+    const doc_id = req.params.doc_id;
+    const doctor = await HospitalAcceptedRequests.findOne({ doc_id });
+    if (doctor) {
+      res.status(200).json(doctor);
+    } else {
+      res.status(404).json('Doctor is not found any hospital');
+    }
   } catch (error) {
-      console.error('Error fetching wallet data:', error);
-      res.status(500).json({ error: 'Failed to fetch wallet data' });
+    console.error('Error fetching wallet data:', error);
+    res.status(500).json({ error: 'Failed to fetch wallet data' });
+  }
+});
+
+///add save doctor time slots
+router.post('/doctorAvailableTimings', async (req, res) => {
+  const { doc_id, startDate, endDate, sessions } = req.body;
+  try {
+    // Check if a record already exists for the given doctor ID and start date
+    let availableTiming = await AvailableTimings.findOne({ doc_id, startDate });
+
+    if (availableTiming) {
+      // If a record exists, check if the number of sessions is less than 3
+      if (availableTiming.sessions.length + sessions.length > 3) {
+        return res.status(400).json({ message: 'Cannot add more than 3 slots for the same date' });
+      }
+
+      // Append the new sessions to the existing sessions array
+      availableTiming.sessions.push(...sessions);
+    } else {
+      // If no record exists, create a new record with the doctor ID, start date, end date, and sessions array
+      availableTiming = new AvailableTimings({
+        doc_id,
+        startDate,
+        endDate,
+        sessions
+      });
+    }
+
+    // Save the updated or new record to the database
+    await availableTiming.save();
+
+    // Return a success message
+    return res.status(200).json({ message: 'Time added successfully' });
+  } catch (error) {
+    console.error('Error saving available timings:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 module.exports = router;
