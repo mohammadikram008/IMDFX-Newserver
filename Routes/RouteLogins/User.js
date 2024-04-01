@@ -291,6 +291,7 @@ router.post('/doctorpersnoldetails', upload.single('image'), async (req, res) =>
       yearofexperience: body.yearofexperience,
       country: body.country,
       state: body.state,
+      city: body.city,
       once: body.once.map(item => ({
         date: item.date,
         timefrom: item.timefrom,
@@ -2082,6 +2083,24 @@ router.get('/doctorAvailableTimings/:docId', async (req, res) => {
   }
 });
 
+
+
+///update doctor time slots
+
+router.put('/updatedoctortimeslot/:docId', async (req, res) => {
+  const { docId } = req.params;
+  console.log("docId",docId);
+  const { onceData, daily, weekly } = req.body;
+  console.log("once",onceData);
+
+  try {
+    const updatedDoctor = await doctordetails.findByIdAndUpdate(docId, { onceData, daily, weekly }, { new: true });
+    res.json(updatedDoctor);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error updating doctor data' });
+  }
+});
 
 
 module.exports = router;

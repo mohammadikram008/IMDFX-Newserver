@@ -13,10 +13,10 @@ const doctordetailsSchema = new mongoose.Schema({
   college: { type: String, required: false },
   license: { type: String, required: false },
   yearofexperience: { type: String, required: false },
-  country: { type: String, required: false },
-  state: { type: String, required: false },
   status: { type: Boolean, default: false },
-
+  country: { type: Boolean, default: false },
+  state: { type: Boolean, default: false },
+  city: { type: Boolean, default: false },
   once: [{
     date: { type: String, required: true },
     timefrom: { type: String, required: true },
@@ -50,6 +50,9 @@ const Pendingdoctor = new mongoose.Schema({
   license: { type: String, required: false },
   yearofexperience: { type: String, required: false },
   status: { type: Boolean, default: false },
+  country: { type: Boolean, default: false },
+  state: { type: Boolean, default: false },
+  city: { type: Boolean, default: false },
   once: [{
     date: { type: String, required: true },
     timefrom: { type: String, required: true },
