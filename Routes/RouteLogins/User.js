@@ -208,64 +208,119 @@ router.get('/getpatient', async (req, res) => {
 });
 
 //add doctor  details
-router.post('/doctorpersnoldetails',
-  upload.single('image'),
-  async (req, res) => {
-    try {
-      const { body, file, verification } = req;
-      // console.log("body", body)
-      const { email } = body.email
-      const doctordetail = await doctordetails.find({ email });
+// router.post('/doctorpersnoldetails', upload.single('image'), async (req, res) => {
+//   try {
+//     const { body, file, verification } = req;
+//     console.log("body", body)
+//     const { email } = body.email
+//     const doctordetail = await doctordetails.find({ email });
 
-      if (doctordetail.length > 0) {
-        return res.status(200).json({ message: 'Doctor is already registered!' });
-      }
-      // Create a new doctordetails instance with the received data
-      const newDoctorDetails = new pendingdoctors({
-        image: file ? file.path : null, // Assuming you want to store the file path
-        image: verification ? verification.path : null, // Assuming you want to store the file path
-        name: body.name,
-        email: body.email,
-        password: body.password,
-        specialization: body.specialization,
-        conditionstreated: body.conditionstreated,
-        aboutself: body.aboutself,
-        education: body.education,
-        college: body.college,
-        license: body.license,
-        yearofexperience: body.yearofexperience,
-        country: body.country,
-        state: body.state,
-        once: {
-          date: body['once.date'],
-          timefrom: body['once.timefrom'],
-          timetill: body['once.timetill'],
-          consultationfees: body['once.consultationfees'],
-        },
-        daily: {
-          datefrom: body['daily.datefrom'],
-          datetill: body['daily.datetill'],
-          timefrom: body['daily.timefrom'],
-          timetill: body['daily.timetill'],
-          consultationfees: body['daily.consultationfees'],
-        },
-        weekly: {
-          day: body['weekly.day'],
-          timefrom: body['weekly.timefrom'],
-          timetill: body['weekly.timetill'],
-          consultationfees: body['weekly.consultationfees'],
-        },
-      });
+//     if (doctordetail.length > 0) {
+//       return res.status(200).json({ message: 'Doctor is already registered!' });
+//     }
+//     // Create a new doctordetails instance with the received data
+//     const newDoctorDetails = new pendingdoctors({
+//       image: file ? file.path : null, // Assuming you want to store the file path
+//       image: verification ? verification.path : null, // Assuming you want to store the file path
+//       name: body.name,
+//       email: body.email,
+//       password: body.password,
+//       specialization: body.specialization,
+//       conditionstreated: body.conditionstreated,
+//       aboutself: body.aboutself,
+//       education: body.education,
+//       college: body.college,
+//       license: body.license,
+//       yearofexperience: body.yearofexperience,
+//       country: body.country,
+//       state: body.state,
+//       once: {
+//         date: body['once.date'],
+//         timefrom: body['once.timefrom'],
+//         timetill: body['once.timetill'],
+//         consultationfees: body['once.consultationfees'],
+//       },
+//       daily: {
+//         datefrom: body['daily.datefrom'],
+//         datetill: body['daily.datetill'],
+//         timefrom: body['daily.timefrom'],
+//         timetill: body['daily.timetill'],
+//         consultationfees: body['daily.consultationfees'],
+//       },
+//       weekly: {
+//         day: body['weekly.day'],
+//         timefrom: body['weekly.timefrom'],
+//         timetill: body['weekly.timetill'],
+//         consultationfees: body['weekly.consultationfees'],
+//       },
+//     });
 
-      // Save the data to the database
-      await newDoctorDetails.save();
-      res.status(200).json('Registration successful');
-    } catch (error) {
-      console.error('Error during registration:', error);
-      res.status(500).json({ message: 'Internal server error' });
+//     // Save the data to the database
+//     await newDoctorDetails.save();
+//     res.status(200).json('Registration successful');
+//   } catch (error) {
+//     console.error('Error during registration:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+
+// });
+router.post('/doctorpersnoldetails', upload.single('image'), async (req, res) => {
+  try {
+    const { body, file, verification } = req;
+    console.log("body", body)
+    const { email } = body.email
+    const doctordetail = await doctordetails.find({ email });
+
+    if (doctordetail.length > 0) {
+      return res.status(200).json({ message: 'Doctor is already registered!' });
     }
+    
+    // Create a new doctordetails instance with the received data
+    const newDoctorDetails = new pendingdoctors({
+      image: file ? file.path : null, // Assuming you want to store the file path
+      verification: verification ? verification.path : null, // Assuming you want to store the file path
+      name: body.name,
+      email: body.email,
+      password: body.password,
+      specialization: body.specialization,
+      conditionstreated: body.conditionstreated,
+      aboutself: body.aboutself,
+      education: body.education,
+      college: body.college,
+      license: body.license,
+      yearofexperience: body.yearofexperience,
+      country: body.country,
+      state: body.state,
+      once: body.once.map(item => ({
+        date: item.date,
+        timefrom: item.timefrom,
+        timetill: item.timetill,
+        consultationfees: item.consultationfees,
+      })),
+      daily: body.daily.map(item => ({
+        datefrom: item.datefrom,
+        datetill: item.datetill,
+        timefrom: item.timefrom,
+        timetill: item.timetill,
+        consultationfees: item.consultationfees,
+      })),
+      weekly: body.weekly.map(item => ({
+        day: item.day,
+        timefrom: item.timefrom,
+        timetill: item.timetill,
+        consultationfees: item.consultationfees,
+      })),
+    });
 
-  });
+    // Save the data to the database
+    await newDoctorDetails.save();
+    res.status(200).json('Registration successful');
+  } catch (error) {
+    console.error('Error during registration:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 
 //get DoctorDetails
 router.get("/doctorpersnoldetails", async (req, res) => {
@@ -1973,7 +2028,7 @@ router.get('/check-doctor-office/:doc_id', async (req, res) => {
 ///add save doctor time slots
 router.post('/doctorAvailableTimings', async (req, res) => {
   const { doc_id, startDate, endDate, sessions } = req.body;
-  console.log("startDate",startDate,"startDate",startDate);
+  console.log("startDate", startDate, "startDate", startDate);
   try {
     // Check if a record already exists for the given doctor ID and start date
     let availableTiming = await AvailableTimings.findOne({ doc_id, startDate });

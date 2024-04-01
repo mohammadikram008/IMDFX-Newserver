@@ -38,7 +38,7 @@ const doctordetailsSchema = new mongoose.Schema({
   }],
 });
 const Pendingdoctor = new mongoose.Schema({
-  image: { type: String, required: true },
+  image: { type: String, required: false },
   name: { type: String, required: true },
   email: { type: String, required: false,unique: true },
   password: { type: String, required: false },
