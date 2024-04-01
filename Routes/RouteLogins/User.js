@@ -274,7 +274,7 @@ router.post('/doctorpersnoldetails', upload.single('image'), async (req, res) =>
     if (doctordetail.length > 0) {
       return res.status(200).json({ message: 'Doctor is already registered!' });
     }
-    
+
     // Create a new doctordetails instance with the received data
     const newDoctorDetails = new pendingdoctors({
       image: file ? file.path : null, // Assuming you want to store the file path
@@ -2087,20 +2087,198 @@ router.get('/doctorAvailableTimings/:docId', async (req, res) => {
 
 ///update doctor time slots
 
+// router.put('/updatedoctortimeslot/:docId', async (req, res) => {
+//   const { docId } = req.params;
+//   console.log("docId",docId);
+//   const { once, daily, weeks } = req.body;
+//   const weekly=weeks;
+//   console.log("weekly",weekly);
+//   try {
+//     let updatedDoctor;
+//     if (weekly) {
+//       // If weekly data is provided, append it to the existing array
+//       updatedDoctor = await doctordetails.findByIdAndUpdate(
+//         docId,
+//         { $push: { weekly: weekly } }, // Append new weekly data to the array
+//         { new: true }
+//       );
+//     } else {
+//       // If weekly data is not provided, update other fields
+//       updatedDoctor = await doctordetails.findByIdAndUpdate(
+//         docId,
+//         { once, daily },
+//         { new: true }
+//       );
+//     }
+//     res.json(updatedDoctor);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Error updating doctor data' });
+//   }
+// });
+// router.put('/updatedoctortimeslot/:docId', async (req, res) => {
+//   const { docId } = req.params;
+//   const { once, daily, weeks } = req.body;
+//   const weekly = weeks;
+
+//   try {
+//       let updatedDoctor;
+
+//       if (weekly) {
+//           const existingDoctor = await doctordetails.findById(docId);
+
+//           // Check if the provided time slot conflicts with existing slots for the same day
+//           const timeConflict = existingDoctor.weekly.some(item =>
+//               item.day === weekly.day &&
+//               item.timefrom === weekly.timefrom &&
+//               item.timetill === weekly.timetill
+//           );
+
+//           if (timeConflict) {
+//               return res.status(400).json({ message: 'Duplicate time slot for the same day' });
+//           }
+
+//           // If no conflict, append the new slot to the existing array
+//           updatedDoctor = await doctordetails.findByIdAndUpdate(
+//               docId,
+//               { $push: { weekly } },
+//               { new: true }
+//           );
+//       } else {
+//           // If weekly data is not provided, update other fields
+//           updatedDoctor = await doctordetails.findByIdAndUpdate(
+//               docId,
+//               { once, daily },
+//               { new: true }
+//           );
+//       }
+
+//       res.json(updatedDoctor);
+//   } catch (error) {
+//       console.error(error);
+//       res.status(500).json({ message: 'Error updating doctor data' });
+//   }
+// });
+
 router.put('/updatedoctortimeslot/:docId', async (req, res) => {
   const { docId } = req.params;
-  console.log("docId",docId);
-  const { onceData, daily, weekly } = req.body;
-  console.log("once",onceData);
+  const { once, daily, weeks } = req.body;
+  const weekly = weeks;
 
   try {
-    const updatedDoctor = await doctordetails.findByIdAndUpdate(docId, { onceData, daily, weekly }, { new: true });
-    res.json(updatedDoctor);
+      let updatedDoctor;
+
+      if (weekly) {
+          const existingDoctor = await doctordetails.findById(docId);
+
+          // Check if the provided time slot conflicts with existing slots for the same day
+          const timeConflict = existingDoctor.weekly.some(item =>
+              item.day === weekly.day &&
+              item.timefrom === weekly.timefrom &&
+              item.timetill === weekly.timetill
+          );
+
+          if (timeConflict) {
+              return res.status(400).json({ message: 'Duplicate time slot for the same day' });
+          }
+
+          // Count the number of existing time slots for the provided day
+          const existingSlotsForDay = existingDoctor.weekly.filter(item => item.day === weekly.day);
+          const slotsCount = existingSlotsForDay.length;
+
+          // Check if the number of slots exceeds the limit of 5
+          if (slotsCount >= 5) {
+              return res.status(400).json({ message: 'Maximum number of time slots reached for the day' });
+          }
+
+          // If no conflict and within the limit, append the new slot to the existing array
+          updatedDoctor = await doctordetails.findByIdAndUpdate(
+              docId,
+              { $push: { weekly } },
+              { new: true }
+          );
+      } else {
+          // If weekly data is not provided, update other fields
+          updatedDoctor = await doctordetails.findByIdAndUpdate(
+              docId,
+              { once, daily },
+              { new: true }
+          );
+      }
+
+      res.json(updatedDoctor);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error updating doctor data' });
+      console.error(error);
+      res.status(500).json({ message: 'Error updating doctor data' });
   }
 });
+
+// router.put('/updatedoctortimeslot/:docId', async (req, res) => {
+//   const { docId } = req.params;
+//   const { once, daily, weeks } = req.body;
+//   const weekly = weeks;
+//   console.log("wekly", weekly);
+
+//   try {
+//     let updatedDoctor;
+
+//     if (weekly) {
+//       // Check if the provided day already has 5 slots
+//       const existingDoctor = await doctordetails.findById(docId);
+//       console.log("existingDoctor", existingDoctor);
+
+//       // If weekly array doesn't exist, create it with the new slot
+//       if (!existingDoctor.weekly) {
+//         updatedDoctor = await doctordetails.findByIdAndUpdate(
+//           docId,
+//           { $set: { 'weekly': [{ day: weekly.day, slots: [{ timefrom: weekly.timefrom, timetill: weekly.timetill }] }] } },
+//           { new: true }
+//         );
+//       } else {
+//         // Check if the provided day already has 5 slots
+//         const daySlots = existingDoctor.weekly.find(item => item.day === weekly.day);
+//         console.log("daySlots", daySlots);
+
+//         if (daySlots && daySlots.length >= 5) {
+//           return res.status(400).json({ message: 'Maximum slots per day reached' });
+//         }
+
+//         // Check if the provided time slot conflicts with existing slots for the same day
+//         const timeConflict = existingDoctor.weekly.some(item =>
+//           item.day === weekly.day &&
+//           (
+//             (item.timefrom <= weekly.timefrom && weekly.timefrom < item.timetill) ||
+//             (item.timefrom < weekly.timetill && weekly.timetill <= item.timetill)
+//           )
+//         );
+
+//         if (timeConflict) {
+//           return res.status(400).json({ message: 'Time slot conflict' });
+//         }
+
+//         // If the checks pass, append the new slot to the existing array
+//         updatedDoctor = await doctordetails.findByIdAndUpdate(
+//           docId,
+//           { $push: { 'weekly.$.slots': { timefrom: weekly.timefrom, timetill: weekly.timetill } } },
+//           { new: true }
+//         );
+//       }
+//     } else {
+//       // If weekly data is not provided, update other fields
+//       updatedDoctor = await doctordetails.findByIdAndUpdate(
+//         docId,
+//         { once, daily },
+//         { new: true }
+//       );
+//     }
+
+//     res.json(updatedDoctor);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Error updating doctor data' });
+//   }
+// });
+
 
 
 module.exports = router;

@@ -21,7 +21,7 @@ const doctordetailsSchema = new mongoose.Schema({
     date: { type: String, required: true },
     timefrom: { type: String, required: true },
     timetill: { type: String, required: true },
-    consultationfees: { type: String, required: true },
+    consultationfees: { type: String, required: false },
   }],
   daily: [{
     datefrom: { type: String, required: true },
