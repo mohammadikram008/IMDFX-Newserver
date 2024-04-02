@@ -1740,23 +1740,23 @@ router.get("/get-doc_avaibletime/:docId", async (req, res) => {
 
 
 // check doctor availability for booking at a specific time slot
-router.get('/check-doctor-availability/:doc_id/:timeSlot/:selectedDateData', async (req, res) => {
-  const { doc_id, timeSlot, selectedDateData } = req.params;
+router.get('/check-booking-availability/:doc_id/:timeSlot/:selectedDateData', async (req, res) => {
+  const { docId, timeSlot, selectedDateData } = req.params;
   // console.log("id",doc_id,"timeslot",timeSlot,selectedDate);
   try {
     // Query the database to check if there is any existing booking for the doctor at the given time slot
     const existingBooking = await BookingAppointmentDetail.findOne({
-      doc_id: doc_id,
+      doc_id: docId,
       selectedTimeSlot: timeSlot,
       selectedDate: selectedDateData
     });
 
     if (existingBooking) {
       // Doctor is not available at the specified time slot
-      res.status(200).json({ doc_id, timeSlot, available: false });
+      res.status(200).json({ docId, timeSlot, available: false });
     } else {
       // Doctor is available at the specified time slot
-      res.status(200).json({ doc_id, timeSlot, available: true });
+      res.status(200).json({ docId, timeSlot, available: true });
     }
   } catch (error) {
     // Handle errors
@@ -1764,6 +1764,33 @@ router.get('/check-doctor-availability/:doc_id/:timeSlot/:selectedDateData', asy
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+// check doctor availability for booking at a specific time slot
+router.get('/check-doctor-availability/:docId/:dayname', async (req, res) => {
+  const { docId, dayname } = req.params;
+
+  try {
+    // Find the doctor by docId
+    if(docId !=="null"){
+
+      const doctor = await doctordetails.findById(docId);
+      if (!doctor) {
+        return res.status(404).json({ error: 'Doctor not found' });
+      }
+  
+      // Filter the doctor's weekly schedule to get the time slots for the specified day
+      const dayTimeSlots = doctor.weekly.filter(slot => slot.day === dayname);
+  
+      // Return the filtered time slots for the specified day
+      res.status(200).json({ docId, dayname, timeSlots: dayTimeSlots });
+    }
+
+   
+  } catch (error) {
+    console.error('Error Get Time of That day:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 
 // paitent upload medical Report 
