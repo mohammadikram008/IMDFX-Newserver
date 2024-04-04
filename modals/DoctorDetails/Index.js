@@ -4,7 +4,7 @@ const doctordetailsSchema = new mongoose.Schema({
   image: { type: String, required: false },
   verification: { type: String, required: false },
   name: { type: String, required: true },
-  email: { type: String, required: false,unique: true },
+  email: { type: String, required: false, unique: true },
   password: { type: String, required: false },
   specialization: { type: String, required: true },
   conditionstreated: { type: String, required: true },
@@ -15,7 +15,7 @@ const doctordetailsSchema = new mongoose.Schema({
   yearofexperience: { type: String, required: false },
   status: { type: Boolean, default: false },
   country: { type: String, required: false },
-  state: { type: String,required:false },
+  state: { type: String, required: false },
   city: { type: String, required: false },
   once: [{
     date: { type: String, required: true },
@@ -40,7 +40,7 @@ const doctordetailsSchema = new mongoose.Schema({
 const Pendingdoctor = new mongoose.Schema({
   image: { type: String, required: false },
   name: { type: String, required: true },
-  email: { type: String, required: false,unique: true },
+  email: { type: String, required: false, unique: true },
   password: { type: String, required: false },
   specialization: { type: String, required: true },
   conditionstreated: { type: String, required: true },
@@ -51,7 +51,7 @@ const Pendingdoctor = new mongoose.Schema({
   yearofexperience: { type: String, required: false },
   status: { type: Boolean, default: false },
   country: { type: String, required: false },
-  state: { type: String,required:false },
+  state: { type: String, required: false },
   city: { type: String, required: false },
   once: [{
     date: { type: String, required: true },
@@ -77,4 +77,4 @@ const Pendingdoctor = new mongoose.Schema({
 const doctordetails = mongoose.model("DOCTORDETAILS", doctordetailsSchema);
 const pendingdoctors = mongoose.model("PENDINGDOCTOR", Pendingdoctor);
 
-module.exports = { doctordetails,pendingdoctors };
+module.exports = { doctordetails, pendingdoctors };
