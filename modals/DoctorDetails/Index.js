@@ -1,8 +1,8 @@
 
 const mongoose = require('mongoose');
 const doctordetailsSchema = new mongoose.Schema({
-  image: { type: String, required: true },
-  verification: { type: String, required: true },
+  image: { type: String, required: false },
+  verification: { type: String, required: false },
   name: { type: String, required: true },
   email: { type: String, required: false,unique: true },
   password: { type: String, required: false },
@@ -14,9 +14,9 @@ const doctordetailsSchema = new mongoose.Schema({
   license: { type: String, required: false },
   yearofexperience: { type: String, required: false },
   status: { type: Boolean, default: false },
-  country: { type: Boolean, default: false },
-  state: { type: Boolean, default: false },
-  city: { type: Boolean, default: false },
+  country: { type: String, required: false },
+  state: { type: String,required:false },
+  city: { type: String, required: false },
   once: [{
     date: { type: String, required: true },
     timefrom: { type: String, required: true },
@@ -50,9 +50,9 @@ const Pendingdoctor = new mongoose.Schema({
   license: { type: String, required: false },
   yearofexperience: { type: String, required: false },
   status: { type: Boolean, default: false },
-  country: { type: Boolean, default: false },
-  state: { type: Boolean, default: false },
-  city: { type: Boolean, default: false },
+  country: { type: String, required: false },
+  state: { type: String,required:false },
+  city: { type: String, required: false },
   once: [{
     date: { type: String, required: true },
     timefrom: { type: String, required: true },

@@ -67,20 +67,6 @@ const transporter = nodemailer.createTransport({
 //   }
 // });
 
-// Socket.IO logic
-io.on("connection", (socket) => {
-  console.log("New client connected");
-
-  socket.on("disconnect", () => {
-    console.log("Client disconnected");
-  });
-
-  // Handle doctor joining room
-  socket.on("doctorJoinRoom", (doctorId, userId) => {
-    // Notify patient that the doctor is online
-    io.to(userId).emit("doctorOnlineNotification", "Your doctor is online. Join the room.");
-  });
-});
 
 
 // Signup route
@@ -2000,6 +1986,42 @@ router.put('/update-doctor-status/:id', async (req, res) => {
     res.status(200).json(doctor);
   } catch (error) {
     console.error('Error updating patient status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+//approve doctor
+router.put('/approve-doctor/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('id', id);
+
+    // Find the doctor by ID in the pending doctors collection
+    const pendingDoctor = await pendingdoctors.findById(id);
+    console.log('pendingDoctor', pendingDoctor);
+    if (!pendingDoctor) {
+      return res.status(404).json({ message: 'Doctor not found in pending list' });
+    }
+
+    // Remove the doctor from the pending doctors collection
+    await pendingdoctors.findByIdAndDelete(id);
+
+    // Create a new instance of the approved doctor using the data from the pending doctor
+    const approvedDoctor = new doctordetails(pendingDoctor.toObject());
+    
+    // Update the status field to true (optional)
+    approvedDoctor.status = true;
+
+    // Remove any fields that are not needed in the approved doctors collection
+    // delete approvedDoctor.verification;
+
+    // Save the approved doctor to the approved doctors collection
+    await approvedDoctor.save();
+
+    // Return the approved doctor
+    res.status(200).json(approvedDoctor);
+  } catch (error) {
+    console.error('Error approving doctor:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
