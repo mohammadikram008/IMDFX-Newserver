@@ -24,14 +24,14 @@ const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const path = require("path");
+const fs = require("fs");
 const upload = multer({ dest: 'uploads/' });
+
 const app = express();
 const cors = require("cors");
 app.use('/uploads', express.static('uploads'));
 
-
-const server = http.createServer(app);
-const io = socketIo(server);
 
 const { authenticateToken } = require('../../authentication');
 const { log } = require('console');
@@ -48,6 +48,90 @@ const generateSecretKey = () => {
   return crypto.randomBytes(32).toString('hex');
 };
 
+
+const storageSingle = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "../uploads/"));
+  },
+  filename: function (req, file, cb) {
+    const filename =
+      file.fieldname + "-" + Date.now() + path.extname(file.originalname);
+    const filePath = path.join(__dirname, "../uploads/", filename);
+    console.log(filePath)
+
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+      if (err) {
+        cb(null, filename);
+      } else {
+        cb(null, file.fieldname);
+      }
+    });
+  },
+});
+const uploadSingle = multer({
+  storage: storageSingle,
+  fileFilter: function (req, file, cb) {
+    // console.log(file)
+    checkFileType(file, cb);
+  },
+});
+
+function checkFileType(file, cb) {
+  const filetypes = /jpeg|jpg|png|gif/;
+  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = filetypes.test(file.mimetype);
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb("Error: Images only!");
+  }
+}
+
+// multiple
+// const storageMultiple = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, path.join(__dirname, "../uploads/"));
+//   },
+//   filename: function (req, file, cb) {
+//     const filename =
+//       file.fieldname + "-" + Date.now() + path.extname(file.originalname);
+//     const filePath = path.join(__dirname, "../uploads/", filename);
+
+//     // Check if the file already exists in the destination folder
+//     fs.access(filePath, fs.constants.F_OK, (err) => {
+//       if (err) {
+//         // File doesn't exist, proceed with saving
+//         cb(null, filename);
+//       } else {
+//         // File already exists, just return the filename without saving it again
+//         cb(null, filename); // Send only the fieldname without timestamp
+//       }
+//     });
+//   },
+// });
+
+// exports.uploadMultiple = multer({
+//   storage: storageMultiple,
+//   fileFilter: function (req, file, cb) {
+//     // console.log(file)
+//     checkFileType(file, cb);
+//   },
+// }).fields([
+//   { name: "userImage", maxCount: 1 },
+//   { name: "kycBImage", maxCount: 1 },
+//   { name: "kycFImage", maxCount: 1 },
+// ]);
+
+// function checkFileType(file, cb) {
+//   const filetypes = /jpeg|jpg|png|gif/;
+//   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+//   const mimetype = filetypes.test(file.mimetype);
+//   if (mimetype && extname) {
+//     return cb(null, true);
+//   } else {
+//     cb("Error: Images only!");
+//   }
+// }
 
 require('dotenv').config();
 // vbin oyml zgou fcxe
@@ -194,62 +278,6 @@ router.get('/getpatient', async (req, res) => {
 });
 
 //add doctor  details
-// router.post('/doctorpersnoldetails', upload.single('image'), async (req, res) => {
-//   try {
-//     const { body, file, verification } = req;
-//     console.log("body", body)
-//     const { email } = body.email
-//     const doctordetail = await doctordetails.find({ email });
-
-//     if (doctordetail.length > 0) {
-//       return res.status(200).json({ message: 'Doctor is already registered!' });
-//     }
-//     // Create a new doctordetails instance with the received data
-//     const newDoctorDetails = new pendingdoctors({
-//       image: file ? file.path : null, // Assuming you want to store the file path
-//       image: verification ? verification.path : null, // Assuming you want to store the file path
-//       name: body.name,
-//       email: body.email,
-//       password: body.password,
-//       specialization: body.specialization,
-//       conditionstreated: body.conditionstreated,
-//       aboutself: body.aboutself,
-//       education: body.education,
-//       college: body.college,
-//       license: body.license,
-//       yearofexperience: body.yearofexperience,
-//       country: body.country,
-//       state: body.state,
-//       once: {
-//         date: body['once.date'],
-//         timefrom: body['once.timefrom'],
-//         timetill: body['once.timetill'],
-//         consultationfees: body['once.consultationfees'],
-//       },
-//       daily: {
-//         datefrom: body['daily.datefrom'],
-//         datetill: body['daily.datetill'],
-//         timefrom: body['daily.timefrom'],
-//         timetill: body['daily.timetill'],
-//         consultationfees: body['daily.consultationfees'],
-//       },
-//       weekly: {
-//         day: body['weekly.day'],
-//         timefrom: body['weekly.timefrom'],
-//         timetill: body['weekly.timetill'],
-//         consultationfees: body['weekly.consultationfees'],
-//       },
-//     });
-
-//     // Save the data to the database
-//     await newDoctorDetails.save();
-//     res.status(200).json('Registration successful');
-//   } catch (error) {
-//     console.error('Error during registration:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-
-// });
 router.post('/doctorpersnoldetails', upload.single('image'), async (req, res) => {
   try {
     const { body, file, verification } = req;
@@ -260,11 +288,10 @@ router.post('/doctorpersnoldetails', upload.single('image'), async (req, res) =>
     if (doctordetail.length > 0) {
       return res.status(200).json({ message: 'Doctor is already registered!' });
     }
-
     // Create a new doctordetails instance with the received data
     const newDoctorDetails = new pendingdoctors({
-      image: file ? file.path : null, // Assuming you want to store the file path
-      verification: verification ? verification.path : null, // Assuming you want to store the file path
+      image: file ? file.path : null, 
+      image: verification ? verification.path : null, 
       name: body.name,
       email: body.email,
       password: body.password,
@@ -277,26 +304,25 @@ router.post('/doctorpersnoldetails', upload.single('image'), async (req, res) =>
       yearofexperience: body.yearofexperience,
       country: body.country,
       state: body.state,
-      city: body.city,
-      once: body.once.map(item => ({
-        date: item.date,
-        timefrom: item.timefrom,
-        timetill: item.timetill,
-        consultationfees: item.consultationfees,
-      })),
-      daily: body.daily.map(item => ({
-        datefrom: item.datefrom,
-        datetill: item.datetill,
-        timefrom: item.timefrom,
-        timetill: item.timetill,
-        consultationfees: item.consultationfees,
-      })),
-      weekly: body.weekly.map(item => ({
-        day: item.day,
-        timefrom: item.timefrom,
-        timetill: item.timetill,
-        consultationfees: item.consultationfees,
-      })),
+      once: {
+        date: body['once.date'],
+        timefrom: body['once.timefrom'],
+        timetill: body['once.timetill'],
+        consultationfees: body['once.consultationfees'],
+      },
+      daily: {
+        datefrom: body['daily.datefrom'],
+        datetill: body['daily.datetill'],
+        timefrom: body['daily.timefrom'],
+        timetill: body['daily.timetill'],
+        consultationfees: body['daily.consultationfees'],
+      },
+      weekly: {
+        day: body['weekly.day'],
+        timefrom: body['weekly.timefrom'],
+        timetill: body['weekly.timetill'],
+        consultationfees: body['weekly.consultationfees'],
+      },
     });
 
     // Save the data to the database
@@ -306,7 +332,86 @@ router.post('/doctorpersnoldetails', upload.single('image'), async (req, res) =>
     console.error('Error during registration:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
+
 });
+
+//new way to add images 
+// router.post('/doctorpersnoldetails', async (req, res) => {
+//   try {
+//     uploadSingle.single('image')(req, res, async function (err) {
+//       if (err instanceof multer.MulterError) {
+//         // A Multer error occurred when uploading.
+//         console.log(err)
+
+//         return res.status(400).json({ message: err.message, success: false });
+//       } else if (err) {
+//         console.log(err)
+
+//         // An unknown error occurred when uploading.
+//         return res.status(500).json({ message: err.message, success: false });
+//       }
+//       const { body, file, verification } = req;
+//       console.log("body", body)
+//       const { email } = body.email
+//       const doctordetail = await doctordetails.find({ email });
+
+//       if (doctordetail.length > 0) {
+//         return res.status(200).json({ message: 'Doctor is already registered!' });
+//       }
+//       let { title, rank } = req.body;
+//       let image = req.file ? req.file.filename : null; 
+//       // Create a new doctordetails instance with the received data
+//       const newDoctorDetails = new pendingdoctors({
+//         image: file ? file.path : null, // Assuming you want to store the file path
+//         verification: verification ? verification.path : null, // Assuming you want to store the file path
+//         name: body.name,
+//         email: body.email,
+//         password: body.password,
+//         specialization: body.specialization,
+//         conditionstreated: body.conditionstreated,
+//         aboutself: body.aboutself,
+//         education: body.education,
+//         college: body.college,
+//         license: body.license,
+//         yearofexperience: body.yearofexperience,
+//         country: body.country,
+//         state: body.state,
+//         city: body.city,
+//         once: body.once.map(item => ({
+//           date: item.date,
+//           timefrom: item.timefrom,
+//           timetill: item.timetill,
+//           consultationfees: item.consultationfees,
+//         })),
+//         daily: body.daily.map(item => ({
+//           datefrom: item.datefrom,
+//           datetill: item.datetill,
+//           timefrom: item.timefrom,
+//           timetill: item.timetill,
+//           consultationfees: item.consultationfees,
+//         })),
+//         weekly: body.weekly.map(item => ({
+//           day: item.day,
+//           timefrom: item.timefrom,
+//           timetill: item.timetill,
+//           consultationfees: item.consultationfees,
+//         })),
+//       });
+
+//       // Save the data to the database
+//       await newDoctorDetails.save();
+//       res.status(200).json('Registration successful');
+//       // Get the uploaded file from req.file
+
+
+
+//     });
+
+//   } catch (error) {
+//     console.error('Error during registration:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// });
 
 
 //get DoctorDetails
@@ -844,64 +949,78 @@ router.get("/doctorTransactions/:doc_id", async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-// API endpoint for updating the profile
-router.post('/update-patient-profile/:userId',
-  upload.single('image'),
-  async (req, res) => {
-    try {
-      const userId = req.params.userId;
-      console.log("body", req.body);
-      const {
-        firstName,
-        lastName,
-        dateOfBirth,
-        email,
-        mobile,
-        address,
-        city,
-        state,
-        zipCode,
-        country,
-        file
-      } = req.body;
-
-      // Find the user by ID
-      const user = await User.findOne({ _id: userId });
-      ;
-
-      if (!user) {
-        return res.status(200).json({ message: 'Patient Profile  is Not Found!' });
-      }
-      // Create a new doctordetails instance with the received data
-      const patientProfile = new PatientProfile({
-        image: file ? file.path : null, // Assuming you want to store the file path
-        firstName: firstName,
-        lastName: lastName,
-        dateOfBirth: dateOfBirth,
-        email: email,
-        mobile: mobile,
-        address: address,
-        city: city,
-        state: state,
-        zipCode: zipCode,
-        country: country,
-
-      });
-
-      // Save the data to the database
-      await patientProfile.save();
 
 
-      res.status(200).json('Profile updated successfully');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      res.status(500).json('Error updating profile');
+// patient updating the profile
+router.post('/update-patient-profile/:userId', upload.single('image'), async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    console.log("body", req.body);
+    const file = req.file;
+    const {
+      firstName,
+      lastName,
+      dateOfBirth,
+      email,
+      mobile,
+      address,
+      city,
+      state,
+      zipCode,
+      country,
+    
+    } = req.body;
+
+    console.log("file", file)
+
+    // Find the user by ID
+    const user = await User.findOne({ _id: userId });
+
+    if (!user) {
+      return res.status(200).json({ message: 'Patient Profile  is Not Found!' });
     }
-  });
+    // Create a new doctordetails instance with the received data
+    const patientProfile = new PatientProfile({
+      image: file ? file.path : null,
+      firstName: firstName,
+      lastName: lastName,
+      dateOfBirth: dateOfBirth,
+      email: email,
+      mobile: mobile,
+      address: address,
+      city: city,
+      state: state,
+      zipCode: zipCode,
+      country: country,
+      userId: userId,
+    });
+
+    // Save the data to the database
+    await patientProfile.save();
+    res.status(200).json('Profile updated successfully');
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json('Error updating profile');
+  }
+});
+
+// get patient patient profile 
+router.get("/getpatient-profile/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const profile = await PatientProfile.find({ userId: userId });
+    res.status(200).json(profile);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
 
 //doctor update own profile 
 router.post('/update-doctor-profile/:docId',
-  upload.single('image'),
+  // upload.single('image'),
   async (req, res) => {
     try {
       const userId = req.params.userId;
@@ -1215,48 +1334,50 @@ router.post("/deletemedicaldetails/:userId", async (req, res) => {
 //     res.status(500).json({ error: 'Internal Server Error' });
 //   }
 // });
-router.post('/Prescription', upload.single('image'), async (req, res) => {
-  try {
-    // Extract form data from the request body
-    const {
-      userId,
-      doc_id,
-      name,
-      quantity,
-      days,
-      morning,
-      afternoon,
-      evening,
-      night,
-      reporttitle,
-      reportcagatory
-    } = req.body;
-    console.log("file", req.body);
-    // Create a new Prescription instance with the received data
-    const prescription = new Prescriptions({
-      userId,
-      doc_id,
-      name,
-      quantity,
-      days,
-      morning,
-      afternoon,
-      evening,
-      night,
-      image: req.file.filename,
-      reporttitle,
-      reportcagatory
-    });
+router.post('/Prescription',
+  //  upload.single('image'),
+  async (req, res) => {
+    try {
+      // Extract form data from the request body
+      const {
+        userId,
+        doc_id,
+        name,
+        quantity,
+        days,
+        morning,
+        afternoon,
+        evening,
+        night,
+        reporttitle,
+        reportcagatory
+      } = req.body;
+      console.log("file", req.body);
+      // Create a new Prescription instance with the received data
+      const prescription = new Prescriptions({
+        userId,
+        doc_id,
+        name,
+        quantity,
+        days,
+        morning,
+        afternoon,
+        evening,
+        night,
+        image: req.file.filename,
+        reporttitle,
+        reportcagatory
+      });
 
-    // Save the prescription to the database
-    await prescription.save();
+      // Save the prescription to the database
+      await prescription.save();
 
-    res.status(201).json('Prescription submitted successfully!');
-  } catch (error) {
-    console.error('Error submitting prescription:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+      res.status(201).json('Prescription submitted successfully!');
+    } catch (error) {
+      console.error('Error submitting prescription:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
 
 // get prescription with userid  
 router.get('/get-prescriptions/:userId', async (req, res) => {
@@ -1756,21 +1877,21 @@ router.get('/check-doctor-availability/:docId/:dayname', async (req, res) => {
 
   try {
     // Find the doctor by docId
-    if(docId !=="null"){
+    if (docId !== "null") {
 
       const doctor = await doctordetails.findById(docId);
       if (!doctor) {
         return res.status(404).json({ error: 'Doctor not found' });
       }
-  
+
       // Filter the doctor's weekly schedule to get the time slots for the specified day
       const dayTimeSlots = doctor.weekly.filter(slot => slot.day === dayname);
-  
+
       // Return the filtered time slots for the specified day
       res.status(200).json({ docId, dayname, timeSlots: dayTimeSlots });
     }
 
-   
+
   } catch (error) {
     console.error('Error Get Time of That day:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -1780,30 +1901,68 @@ router.get('/check-doctor-availability/:docId/:dayname', async (req, res) => {
 
 
 // paitent upload medical Report 
-router.post('/medicalreport/:userId', upload.fields([
-  { name: 'BloodReport', maxCount: 1 },
-  { name: 'STscan', maxCount: 1 },
-  { name: 'MRI', maxCount: 1 }
-]), async (req, res) => {
+// router.post('/medicalreport/:userId', upload.fields([
+//   { name: 'BloodReport', maxCount: 1 },
+//   { name: 'STscan', maxCount: 1 },
+//   { name: 'MRI', maxCount: 1 }
+// ]), async (req, res) => {
+//   try {
+//     // const { userId } = req.body;
+//     const { userId } = req.params;
+//     console.log("reQ", req.body);
+//     const medicalReport = new MedicalReport({
+//       userId,
+//       BloodReport: req.files['BloodReport'] ? req.files['BloodReport'][0].path : null,
+//       STscan: req.files['STscan'] ? req.files['STscan'][0].path : null,
+//       MRI: req.files['MRI'] ? req.files['MRI'][0].path : null
+//     });
+
+//     await medicalReport.save();
+
+//     res.status(201).json({ message: 'Medical report saved successfully' });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
+router.post('/medicalreport/:userId', async (req, res) => {
   try {
-    // const { userId } = req.body;
-    const { userId } = req.params;
-    console.log("reQ", req.body);
-    const medicalReport = new MedicalReport({
-      userId,
-      BloodReport: req.files['BloodReport'] ? req.files['BloodReport'][0].path : null,
-      STscan: req.files['STscan'] ? req.files['STscan'][0].path : null,
-      MRI: req.files['MRI'] ? req.files['MRI'][0].path : null
+    uploadSingle.single('image')(req, res, async function (err) {
+      if (err instanceof multer.MulterError) {
+        // A Multer error occurred when uploading.
+        console.log(err)
+
+        return res.status(400).json({ message: err.message, success: false });
+      } else if (err) {
+        console.log(err)
+
+        // An unknown error occurred when uploading.
+        return res.status(500).json({ message: err.message, success: false });
+      }
+      const { userId } = req.params;
+      console.log("reQ", req.body);
+      const medicalReport = new MedicalReport({
+        userId,
+        BloodReport: req.files['BloodReport'] ? req.files['BloodReport'][0].path : null,
+        STscan: req.files['STscan'] ? req.files['STscan'][0].path : null,
+        MRI: req.files['MRI'] ? req.files['MRI'][0].path : null
+      });
+
+      await medicalReport.save();
+
+      res.status(201).json({ message: 'Medical report saved successfully' });
+
+
+
     });
+    // const { userId } = req.body;
 
-    await medicalReport.save();
-
-    res.status(201).json({ message: 'Medical report saved successfully' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 
 // get patient Medical Report
@@ -1848,7 +2007,59 @@ router.get('/search-location', async (req, res) => {
 
 
 /// Update office own profile 
-router.post('/update-office-profile/:officeId', upload.single('image'), async (req, res) => {
+// router.post('/update-office-profile/:officeId', upload.single('image'), async (req, res) => {
+//   try {
+//     const officeId = req.params.officeId;
+//     console.log("body", req.body);
+//     const {
+
+//       email,
+//       phone,
+//       officename,
+//       officeemail,
+//       officephone,
+//       officewebsite,
+//       officespecialty,
+//       country,
+//       street,
+//       city,
+//       state,
+//       zipcode,
+//       file
+//     } = req.body;
+
+//     // Find the office profile by ID
+//     const officeProfile = await office.findOne({ _id: officeId });
+//     if (!officeProfile) {
+//       return res.status(404).json({ message: 'Office Profile not found' });
+//     }
+
+//     // Update the existing office profile with the received data
+
+//     officeProfile.email = email;
+//     officeProfile.phone = phone;
+//     officeProfile.officename = officename;
+//     officeProfile.officeemail = officeemail;
+//     officeProfile.officephone = officephone;
+//     officeProfile.officewebsite = officewebsite;
+//     officeProfile.officespecialty = officespecialty;
+//     officeProfile.country = country;
+//     officeProfile.street = street;
+//     officeProfile.city = city;
+//     officeProfile.state = state;
+//     officeProfile.zipcode = zipcode;
+//     officeProfile.image = file ? file.path : officeProfile.image; // If a new image is provided, update it
+
+//     // Save the updated profile to the database
+//     await officeProfile.save();
+
+//     res.status(200).json('Office Profile updated successfully');
+//   } catch (error) {
+//     console.error('Error updating profile:', error);
+//     res.status(500).json('Error updating profile');
+//   }
+// });
+router.post('/update-office-profile/:officeId', async (req, res) => {
   try {
     const officeId = req.params.officeId;
     console.log("body", req.body);
@@ -2008,7 +2219,7 @@ router.put('/approve-doctor/:id', async (req, res) => {
 
     // Create a new instance of the approved doctor using the data from the pending doctor
     const approvedDoctor = new doctordetails(pendingDoctor.toObject());
-    
+
     // Update the status field to true (optional)
     approvedDoctor.status = true;
 
@@ -2215,50 +2426,50 @@ router.put('/updatedoctortimeslot/:docId', async (req, res) => {
   const weekly = weeks;
 
   try {
-      let updatedDoctor;
+    let updatedDoctor;
 
-      if (weekly) {
-          const existingDoctor = await doctordetails.findById(docId);
+    if (weekly) {
+      const existingDoctor = await doctordetails.findById(docId);
 
-          // Check if the provided time slot conflicts with existing slots for the same day
-          const timeConflict = existingDoctor.weekly.some(item =>
-              item.day === weekly.day &&
-              item.timefrom === weekly.timefrom &&
-              item.timetill === weekly.timetill
-          );
+      // Check if the provided time slot conflicts with existing slots for the same day
+      const timeConflict = existingDoctor.weekly.some(item =>
+        item.day === weekly.day &&
+        item.timefrom === weekly.timefrom &&
+        item.timetill === weekly.timetill
+      );
 
-          if (timeConflict) {
-              return res.status(400).json({ message: 'Duplicate time slot for the same day' });
-          }
-
-          // Count the number of existing time slots for the provided day
-          const existingSlotsForDay = existingDoctor.weekly.filter(item => item.day === weekly.day);
-          const slotsCount = existingSlotsForDay.length;
-
-          // Check if the number of slots exceeds the limit of 5
-          if (slotsCount >= 5) {
-              return res.status(400).json({ message: 'Maximum number of time slots reached for the day' });
-          }
-
-          // If no conflict and within the limit, append the new slot to the existing array
-          updatedDoctor = await doctordetails.findByIdAndUpdate(
-              docId,
-              { $push: { weekly } },
-              { new: true }
-          );
-      } else {
-          // If weekly data is not provided, update other fields
-          updatedDoctor = await doctordetails.findByIdAndUpdate(
-              docId,
-              { once, daily },
-              { new: true }
-          );
+      if (timeConflict) {
+        return res.status(400).json({ message: 'Duplicate time slot for the same day' });
       }
 
-      res.json(updatedDoctor);
+      // Count the number of existing time slots for the provided day
+      const existingSlotsForDay = existingDoctor.weekly.filter(item => item.day === weekly.day);
+      const slotsCount = existingSlotsForDay.length;
+
+      // Check if the number of slots exceeds the limit of 5
+      if (slotsCount >= 5) {
+        return res.status(400).json({ message: 'Maximum number of time slots reached for the day' });
+      }
+
+      // If no conflict and within the limit, append the new slot to the existing array
+      updatedDoctor = await doctordetails.findByIdAndUpdate(
+        docId,
+        { $push: { weekly } },
+        { new: true }
+      );
+    } else {
+      // If weekly data is not provided, update other fields
+      updatedDoctor = await doctordetails.findByIdAndUpdate(
+        docId,
+        { once, daily },
+        { new: true }
+      );
+    }
+
+    res.json(updatedDoctor);
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error updating doctor data' });
+    console.error(error);
+    res.status(500).json({ message: 'Error updating doctor data' });
   }
 });
 

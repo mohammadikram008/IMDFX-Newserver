@@ -5,16 +5,17 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
 
   image: { type: String, required: false },
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  dateOfBirth: { type: Date },
-  email: { type: String, required: true, unique: true },
+  firstName: { type: String, required: false },
+  lastName: { type: String, required: false },
+  dateOfBirth: { type: String },
+  email: { type: String, required: false, unique: true },
   mobile: { type: String },
   address: { type: String },
   city: { type: String },
   state: { type: String },
   zipCode: { type: String },
   country: { type: String },
+  userId: { type: String },
   // Add more fields as needed
 });
 

@@ -33,6 +33,7 @@ const io = socketIo(server, {
 
 // Store user ID along with socket ID
 const userIdToSocketId = {};
+const docIdToSocketId = {};
 
 // Define socket event handlers
 io.on('connection', (socket) => {
@@ -42,6 +43,16 @@ io.on('connection', (socket) => {
     userIdToSocketId[userId] = socket.id;
     console.log(`User ${userId} connected with socket ID ${socket.id}`);
   });
+  // socket.on('OnlineDoctorStatus', ({ docId }) => {
+  //   docIdToSocketId[docId] = docId;
+  //   io.emit('DoctorisOnline', { docId: docId });
+  //   console.log(`Doctor ${docId} is online`);
+  // });
+  // socket.on("doctorJoinRoom", (doctorId, userId) => {
+  //   // Notify patient that the doctor is online
+  //   io.emit("doctorOnlineNotification", `Your doctor ${doctorId}`);
+  // });
+
 
   // Handle call request from buyer to seller
   socket.on('callRequestFromBuyer', ({ buyerId, sellerId }) => {
