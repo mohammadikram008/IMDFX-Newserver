@@ -154,18 +154,18 @@ const transporter = nodemailer.createTransport({
 
 
 /////coinbex//////
+
 // Signup route
 router.post('/coinbdixsignup', async (req, res) => {
   try {
-    const { number,username, email, password } = req.body;
+    const { number, email, password } = req.body;
     // console.log("username, email, password", username, email, password)
     const existingUser = await CoinbdixUser.findOne({ email });
 
     if (existingUser) {
       return res.status(400).json('User with this email already exists');
     }
-
-    const user = new CoinbdixUser({number, username, email, password });
+    const user = new CoinbdixUser({number, email, password });
     await user.save();
 
     res.status(200).json('Signup successful');
@@ -174,8 +174,8 @@ router.post('/coinbdixsignup', async (req, res) => {
   }
 });
 
-// user Login  route
 
+// user Login  route
 router.post('/coinbdixlogin', async (req, res) => {
   try {
     const { emailOrMobile, password } = req.body;
@@ -198,7 +198,6 @@ router.post('/coinbdixlogin', async (req, res) => {
 
     // Generate a token using the user's ID
     // const token = jwt.sign({ id: user._id }, secretKey, { expiresIn: '1h' });
-
     // Return the user's ID and token
     res.status(200).json({ userId: user._id});
   } catch (error) {
