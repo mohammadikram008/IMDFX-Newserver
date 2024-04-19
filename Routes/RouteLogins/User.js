@@ -4,6 +4,7 @@ const http = require("http");
 const socketIo = require("socket.io");
 
 const { User } = require("../../modals/Logins/UserLogin");
+const { CoinbdixUser } = require("../../modals/Coinbex/Login");
 const { doctordetails, pendingdoctors } = require("../../modals/DoctorDetails/Index")
 const { BookingAppointment, BookingAppointmentDetail } = require("../../modals/BookAppointment/BookAppointment")
 const { ConformAppointment } = require("../../modals/ConformAppointment/ConformAppointment")
@@ -152,7 +153,61 @@ const transporter = nodemailer.createTransport({
 // });
 
 
+/////coinbex//////
+// Signup route
+router.post('/coinbdixsignup', async (req, res) => {
+  try {
+    const { number,username, email, password } = req.body;
+    // console.log("username, email, password", username, email, password)
+    const existingUser = await CoinbdixUser.findOne({ email });
 
+    if (existingUser) {
+      return res.status(400).json('User with this email already exists');
+    }
+
+    const user = new CoinbdixUser({number, username, email, password });
+    await user.save();
+
+    res.status(200).json('Signup successful');
+  } catch (error) {
+    res.status(500).json('Error saving user to the database');
+  }
+});
+
+// user Login  route
+
+router.post('/coinbdixlogin', async (req, res) => {
+  try {
+    const { emailOrMobile, password } = req.body;
+
+    // Find the user using either email or mobile number
+    const user = await CoinbdixUser.findOne({
+      $or: [
+        { email: emailOrMobile },
+        { number: emailOrMobile }
+      ]
+    }).exec();
+
+    if (!user) {
+      return res.status(404).json('User not found');
+    }
+
+    if (user.password !== password) {
+      return res.status(401).json('Invalid password');
+    }
+
+    // Generate a token using the user's ID
+    // const token = jwt.sign({ id: user._id }, secretKey, { expiresIn: '1h' });
+
+    // Return the user's ID and token
+    res.status(200).json({ userId: user._id});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json('Error logging in');
+  }
+});
+
+////////IMDFX/////
 // Signup route
 router.post('/signup', async (req, res) => {
   try {
@@ -617,7 +672,6 @@ router.post('/bookappointment', async (req, res) => {
   }
 });
 
-
 // get BookAppointment with Doctor details
 router.get("/appointments/:userId", async (req, res) => {
   try {
@@ -674,7 +728,6 @@ router.get('/getDoctorDetail/:id', async (req, res) => {
     res.status(500).json({ error: 'Error retrieving doctor details', details: error.message });
   }
 });
-
 
 // get BookAppointment with patient Id  details
 router.get("/doc_appointments/:docId", async (req, res) => {
@@ -952,10 +1005,60 @@ router.get("/doctorTransactions/:doc_id", async (req, res) => {
 
 
 // patient updating the profile
+// router.post('/update-patient-profile/:userId', upload.single('image'), async (req, res) => {
+//   try {
+//     const userId = req.params.userId;
+//     console.log("body", req.body);
+//     const file = req.file;
+//     const {
+//       firstName,
+//       lastName,
+//       dateOfBirth,
+//       email,
+//       mobile,
+//       address,
+//       city,
+//       state,
+//       zipCode,
+//       country,
+    
+//     } = req.body;
+
+//     console.log("file", file)
+
+//     // Find the user by ID
+//     const user = await User.findOne({ _id: userId });
+
+//     if (!user) {
+//       return res.status(200).json({ message: 'Patient Profile  is Not Found!' });
+//     }
+//     // Create a new doctordetails instance with the received data
+//     const patientProfile = new PatientProfile({
+//       image: file ? file.path : null,
+//       firstName: firstName,
+//       lastName: lastName,
+//       dateOfBirth: dateOfBirth,
+//       email: email,
+//       mobile: mobile,
+//       address: address,
+//       city: city,
+//       state: state,
+//       zipCode: zipCode,
+//       country: country,
+//       userId: userId,
+//     });
+
+//     // Save the data to the database
+//     await patientProfile.save();
+//     res.status(200).json('Profile updated successfully');
+//   } catch (error) {
+//     console.error('Error updating profile:', error);
+//     res.status(500).json('Error updating profile');
+//   }
+// });
 router.post('/update-patient-profile/:userId', upload.single('image'), async (req, res) => {
   try {
     const userId = req.params.userId;
-    console.log("body", req.body);
     const file = req.file;
     const {
       firstName,
@@ -968,41 +1071,63 @@ router.post('/update-patient-profile/:userId', upload.single('image'), async (re
       state,
       zipCode,
       country,
-    
     } = req.body;
-
-    console.log("file", file)
-
     // Find the user by ID
     const user = await User.findOne({ _id: userId });
 
     if (!user) {
       return res.status(200).json({ message: 'Patient Profile  is Not Found!' });
     }
-    // Create a new doctordetails instance with the received data
-    const patientProfile = new PatientProfile({
-      image: file ? file.path : null,
-      firstName: firstName,
-      lastName: lastName,
-      dateOfBirth: dateOfBirth,
-      email: email,
-      mobile: mobile,
-      address: address,
-      city: city,
-      state: state,
-      zipCode: zipCode,
-      country: country,
-      userId: userId,
-    });
 
-    // Save the data to the database
-    await patientProfile.save();
-    res.status(200).json('Profile updated successfully');
+    // Check if the user exists in the PatientProfile collection
+    const patientProfile = await PatientProfile.findOne({ userId: userId });
+
+    if (!patientProfile) {
+      // If patient profile doesn't exist, create a new profile
+      const newPatientProfile = new PatientProfile({
+        image: file ? file.path : null,
+        firstName: firstName,
+        lastName: lastName,
+        dateOfBirth: dateOfBirth,
+        email: email,
+        mobile: mobile,
+        address: address,
+        city: city,
+        state: state,
+        zipCode: zipCode,
+        country: country,
+        userId: userId,
+      });
+
+      // Save the data to the database
+      await newPatientProfile.save();
+      return res.status(200).json('Profile created successfully');
+    } else {
+      // If patient profile exists, update the profile
+      await PatientProfile.findOneAndUpdate(
+        { userId: userId },
+        {
+          image: file ? file.path : null,
+          firstName: firstName,
+          lastName: lastName,
+          dateOfBirth: dateOfBirth,
+          email: email,
+          mobile: mobile,
+          address: address,
+          city: city,
+          state: state,
+          zipCode: zipCode,
+          country: country,
+        }
+      );
+      return res.status(200).json('Profile updated successfully');
+    }
   } catch (error) {
     console.error('Error updating profile:', error);
-    res.status(500).json('Error updating profile');
+    return res.status(500).json('Error updating profile');
   }
 });
+
 
 // get patient patient profile 
 router.get("/getpatient-profile/:userId", async (req, res) => {
@@ -1015,8 +1140,6 @@ router.get("/getpatient-profile/:userId", async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
 
 //doctor update own profile 
 router.post('/update-doctor-profile/:docId',
@@ -1072,7 +1195,6 @@ router.post('/update-doctor-profile/:docId',
       res.status(500).json('Error updating profile');
     }
   });
-
 
 // change password of user
 router.post("/change-user-password/:userId", async (req, res) => {
@@ -1155,7 +1277,6 @@ router.post('/reset-user-password', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 
 // search doctor  by specialization
@@ -1255,6 +1376,7 @@ router.post("/medicaldetails/:userId", async (req, res) => {
     res.status(500).json("Internal Server Error");
   }
 });
+
 //get appointments
 router.get("/getmedicaldetails/:userId", async (req, res) => {
 
@@ -1266,6 +1388,7 @@ router.get("/getmedicaldetails/:userId", async (req, res) => {
     res.send(error);
   }
 });
+
 router.put("/updatemedicaldetails/:userId", async (req, res) => {
   const userId = req.params.userId;
   try {
@@ -1300,6 +1423,7 @@ router.put("/updatemedicaldetails/:userId", async (req, res) => {
     res.status(500).json("Internal Server Error");
   }
 });
+
 // DELETE route for deleting medical details
 router.post("/deletemedicaldetails/:userId", async (req, res) => {
   const userId = req.params.userId;
@@ -1318,7 +1442,6 @@ router.post("/deletemedicaldetails/:userId", async (req, res) => {
     res.status(500).json("Internal Server Error");
   }
 });
-
 
 // add prescription 
 // router.post('/Prescription', async (req, res) => {
@@ -1409,7 +1532,6 @@ router.get('/get-prescriptions/:userId', async (req, res) => {
   }
 });
 
-
 // add hospital 
 router.post('/addOffice', async (req, res) => {
   try {
@@ -1469,7 +1591,6 @@ router.get('/getallOffice', async (req, res) => {
     res.send(error);
   }
 });
-
 
 // doctor requst to hostpital
 router.post('/sendrequest/:doc_id', async (req, res) => {
@@ -1570,8 +1691,6 @@ router.get("/office-doctor-request-details/:Hos_Id", async (req, res) => {
   }
 });
 
-
-
 //when office accept  doctor request 
 router.post('/office-accept-doctor-req/:Hos_Id', async (req, res) => {
   try {
@@ -1610,8 +1729,6 @@ router.post('/cancel-doctor-request/:id', async (req, res) => {
     res.status(500).json('Internal server Error');
   }
 });
-
-
 
 // get doctor  office accepted request 
 router.get('/office-accepte-request/:doc_id', async (req, res) => {
@@ -1703,8 +1820,6 @@ router.post('/delele-doctor-office/:id', async (req, res) => {
   }
 });
 
-
-
 // get doctor for office to show 
 router.get('/get-doctor-office/:Hos_Id', async (req, res) => {
   try {
@@ -1752,7 +1867,6 @@ router.get('/gettodayappointments/:userId', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 //  save doctor available time thorugh doctor id
 // router.post("/doc_avaibletime/:docId", async (req, res) => {
@@ -1898,8 +2012,6 @@ router.get('/check-doctor-availability/:docId/:dayname', async (req, res) => {
   }
 });
 
-
-
 // paitent upload medical Report 
 // router.post('/medicalreport/:userId', upload.fields([
 //   { name: 'BloodReport', maxCount: 1 },
@@ -1925,6 +2037,7 @@ router.get('/check-doctor-availability/:docId/:dayname', async (req, res) => {
 //     res.status(500).json({ error: 'Internal server error' });
 //   }
 // });
+
 router.post('/medicalreport/:userId', async (req, res) => {
   try {
     uploadSingle.single('image')(req, res, async function (err) {
@@ -1963,26 +2076,42 @@ router.post('/medicalreport/:userId', async (req, res) => {
   }
 });
 
+// GET medical reports for a specific user
+// router.get('/getmedicalreport/:userId', async (req, res) => {
+//   try {
+//     const userId = req.params.userId;
+//     const medicalReports = await MedicalReport.find({ userId });
 
+//     // Map over the medical reports and replace file paths with file data
+//     const reportsWithFiles = medicalReports.map(report => ({
+//       _id: report._id,
+//       userId: report.userId,
+//       BloodReport: report.BloodReport ? fs.readFileSync(report.BloodReport, 'base64') : null,
+//       STscan: report.STscan ? fs.readFileSync(report.STscan, 'base64') : null,
+//       MRI: report.MRI ? fs.readFileSync(report.MRI, 'base64') : null,
+//     }));
 
-// get patient Medical Report
+//     res.status(200).json(reportsWithFiles);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
 router.get('/getmedicalreport/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
-    const medicalReports = await MedicalReport.find({ userId });
+    
+    // Find medical reports for the specified user ID
+    const medicalReports = await MedicalReport.find({ userId: userId });
 
-    // Map over the medical reports and replace file paths with file data
-    const reportsWithFiles = medicalReports.map(report => ({
-      _id: report._id,
-      userId: report.userId,
-      BloodReport: report.BloodReport ? fs.readFileSync(report.BloodReport, 'base64') : null,
-      STscan: report.STscan ? fs.readFileSync(report.STscan, 'base64') : null,
-      MRI: report.MRI ? fs.readFileSync(report.MRI, 'base64') : null,
-    }));
+    if (!medicalReports || medicalReports.length === 0) {
+      return res.status(404).json({ message: 'Medical reports not found for this user' });
+    }
 
-    res.status(200).json(reportsWithFiles);
-  } catch (err) {
-    console.error(err);
+    // If medical reports found, return them
+    res.status(200).json({ success: true, data: medicalReports });
+  } catch (error) {
+    console.error('Error fetching medical reports:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -2344,9 +2473,7 @@ router.get('/doctorAvailableTimings/:docId', async (req, res) => {
 });
 
 
-
 ///update doctor time slots
-
 // router.put('/updatedoctortimeslot/:docId', async (req, res) => {
 //   const { docId } = req.params;
 //   console.log("docId",docId);
